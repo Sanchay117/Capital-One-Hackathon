@@ -51,7 +51,7 @@ def build_prompt(context, user_query):
 
         ---
         Provide the answer here:
-"""
+    """
 
 # === RAG function ============================================================
 def generate_answer(user_query, k=3):
