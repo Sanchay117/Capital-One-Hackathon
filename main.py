@@ -20,30 +20,47 @@ index.add(np.array(embeddings))
 
 # === Hugging Face LLM Client ===
 client = InferenceClient(
-    model="mistralai/Mistral-7B-Instruct-v0.1",  # or use flan-t5-xl, zephyr-7b-beta, etc.
-    token="hf_XXXXXXXXXXXXXXXXXXXXXXXXXXXX"  # Replace with your Hugging Face token
+    model="google/gemma-7b-it",
+    token="hf_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"  # <---- your HF token here
 )
+
+# === Helper to Build Numbered, Sourced Context ===
+def build_context_with_sources(idxs):
+    """Return context numbered and with source, e.g. [1] fact (Source: X)"""
+    lines = []
+    for j, i in enumerate(idxs, 1):
+        doc = docs[i]
+        lines.append(f"[{j}] {doc['text']} (Source: {doc['source']})")
+    return "\n".join(lines)
+
+# === Prompt Builder ===
+def build_prompt(context, user_query):
+    return f"""You are an agriculture assistant for Indian farmers.
+
+Use ONLY the facts in the CONTEXT below to answer. When you use a fact, cite it as [number] (e.g., [1]).  
+If you cannot answer from the context, you may answer from your own knowledge, but BEGIN your answer with:  
+"⚠️ This answer is not grounded in the retrieved data. Please verify independently."
+
+CONTEXT:
+{context}
+
+QUESTION:
+{user_query}
+
+ANSWER:
+"""
 
 # === RAG Query Function ===
 def generate_answer(user_query, k=3):
-    # Embed the query
+    # Embed and search
     query_embed = embedder.encode([user_query])
     D, I = index.search(np.array(query_embed), k=k)
 
-    # Build context from top-k retrieved documents
-    context = "\n".join(docs[i]["text"] for i in I[0])
+    # Build context string with sources
+    context = build_context_with_sources(I[0])
 
-    # Construct RAG prompt
-    prompt = f"""You are an agriculture assistant for Indian farmers.
-Answer clearly and only using the facts from the context.
-
-Context:
-{context}
-
-Question:
-{user_query}
-
-Answer:"""
+    # Build prompt
+    prompt = build_prompt(context, user_query)
 
     # Call Hugging Face inference endpoint
     output = client.text_generation(
@@ -52,7 +69,6 @@ Answer:"""
         temperature=0.2,
         stop_sequences=["\n"]
     )
-
     return output.strip()
 
 # === CLI Interface ===
