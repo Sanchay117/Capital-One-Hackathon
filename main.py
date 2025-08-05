@@ -1,89 +1,81 @@
-from huggingface_hub import InferenceClient
-from sentence_transformers import SentenceTransformer
-import faiss
+import os
 import json
 import numpy as np
-import os
+import faiss
 from dotenv import load_dotenv
+from sentence_transformers import SentenceTransformer
+from google import genai                     # <-- google-genai SDK
 
-# === Load ENV Variables ===
+# === ENV & keys ==============================================================
 load_dotenv()
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+if not GEMINI_API_KEY:
+    raise RuntimeError("Set GEMINI_API_KEY in your .env or shell!")
 
-HF_API_KEY = os.environ["HUGGING_FACE_API_KEY"]
+# === Gemini client ===========================================================
+GEMINI_MODEL = "gemini-2.5-flash-lite"
+gemini = genai.Client(api_key=GEMINI_API_KEY)
 
-# === Load Embedding Model ===
+# === Embeddings & vector DB ==================================================
 embedder = SentenceTransformer("all-MiniLM-L6-v2")
 
-# === Load Docs and Create FAISS Index ===
 with open("data.jsonl") as f:
     docs = [json.loads(line) for line in f]
 
-texts = [doc["text"] for doc in docs]
-embeddings = embedder.encode(texts)
-embedding_dim = embeddings[0].shape[0]
+texts       = [d["text"] for d in docs]
+embeddings  = embedder.encode(texts)
+dim         = embeddings[0].shape[0]
 
-index = faiss.IndexFlatL2(embedding_dim)
+index = faiss.IndexFlatL2(dim)
 index.add(np.array(embeddings))
 
-# === Hugging Face LLM Client ===
-client = InferenceClient(
-    model="microsoft/Phi-3-mini-4k-instruct",
-    token=HF_API_KEY
-)
-
-# === Helper to Build Numbered, Sourced Context ===
+# === Prompt helpers ==========================================================
 def build_context_with_sources(idxs):
-    """Context as fact (Source: name) per line, no numbers."""
-    return "\n".join(
-        f"{docs[i]['text']} (Source: {docs[i]['source']})" for i in idxs
-    )
+    return "\n".join(f"{docs[i]['text']} (Source: {docs[i]['source']})" for i in idxs)
 
 def build_prompt(context, user_query):
     return f"""You are an agriculture assistant for Indian farmers.
 
-    Use ONLY the facts in the CONTEXT below to answer. When you use a fact, explicitly mention the source (e.g., 'as per IMD Bulletin').  
-    If you cannot answer from the context, you may answer from your own knowledge, but BEGIN your answer with:  
-    "⚠️ This answer is not grounded in the retrieved data. Please verify independently."
+        POLICY  
+        • If the answer is in CONTEXT → cite sources and answer.  
+        • **If the answer is NOT in CONTEXT → you MUST do BOTH of the following, in order:**  
+        1. Print the exact line below (with emoji):  
+            ⚠️ This answer is not grounded in the retrieved data. Please verify independently.  
+        2. Immediately after that line, give your best answer from general knowledge.
 
-    CONTEXT:
-    {context}
+        CONTEXT  
+        {context}
 
-    QUESTION:
-    {user_query}
+        QUESTION  
+        {user_query}
 
-    ANSWER:
-    """
+        ---
+        Provide the answer here:
+"""
 
-# === RAG Query Function ===
+# === RAG function ============================================================
 def generate_answer(user_query, k=3):
-    # Embed and search
-    query_embed = embedder.encode([user_query])
-    D, I = index.search(np.array(query_embed), k=k)
+    # 1 NN search
+    q_embed = embedder.encode([user_query])
+    _, idxs = index.search(np.array(q_embed), k)
 
-    # Build context string with sources
-    context = build_context_with_sources(I[0])
+    # 2 prompt construction
+    context = build_context_with_sources(idxs[0])
+    prompt  = build_prompt(context, user_query)
 
-    # Build prompt
-    prompt = build_prompt(context, user_query)
-
-    # Call Hugging Face inference endpoint
-    output = client.text_generation(
-        prompt=prompt,
-        max_new_tokens=200,
-        temperature=0.2,
-        stop=["\n"]
+    # 3 Gemini call
+    resp = gemini.models.generate_content(
+        model     = GEMINI_MODEL,
+        contents  = prompt,
     )
-    return output.strip()
+    return resp.text.strip()
 
-# === CLI Interface ===
+# === CLI loop ================================================================
 if __name__ == "__main__":
-    print("🌾 Ask your agri-related question (Ctrl+C to quit):")
-    while True:
-        try:
+    print("🌾  Ask your agri-related question (Ctrl+C to quit):")
+    try:
+        while True:
             q = input("\n🟢 You: ")
-            a = generate_answer(q)
-            print(f"\n🧠 Agent:\n{a}")
-        except KeyboardInterrupt:
-            print("\n👋 Exiting.")
-            break
-
+            print("\n🧠 Agent:\n" + generate_answer(q))
+    except KeyboardInterrupt:
+        print("\n👋 Exiting.")
