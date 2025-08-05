@@ -37,7 +37,7 @@ def build_prompt(context, user_query):
     return f"""You are an agriculture assistant for Indian farmers.
 
         POLICY  
-        • If the answer is in CONTEXT → cite sources and answer.  
+        • If the answer is in CONTEXT → cite sources and answer feel free to draw logical conclusions related to the question from the context.  
         • **If the answer is NOT in CONTEXT → you MUST do BOTH of the following, in order:**  
         1. Print the exact line below (with emoji):  
             ⚠️ This answer is not grounded in the retrieved data. Please verify independently.  
