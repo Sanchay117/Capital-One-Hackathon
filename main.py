@@ -26,29 +26,26 @@ client = InferenceClient(
 
 # === Helper to Build Numbered, Sourced Context ===
 def build_context_with_sources(idxs):
-    """Return context numbered and with source, e.g. [1] fact (Source: X)"""
-    lines = []
-    for j, i in enumerate(idxs, 1):
-        doc = docs[i]
-        lines.append(f"[{j}] {doc['text']} (Source: {doc['source']})")
-    return "\n".join(lines)
+    """Context as fact (Source: name) per line, no numbers."""
+    return "\n".join(
+        f"{docs[i]['text']} (Source: {docs[i]['source']})" for i in idxs
+    )
 
-# === Prompt Builder ===
 def build_prompt(context, user_query):
     return f"""You are an agriculture assistant for Indian farmers.
 
-Use ONLY the facts in the CONTEXT below to answer. When you use a fact, cite it as [number] (e.g., [1]).  
-If you cannot answer from the context, you may answer from your own knowledge, but BEGIN your answer with:  
-"⚠️ This answer is not grounded in the retrieved data. Please verify independently."
+    Use ONLY the facts in the CONTEXT below to answer. When you use a fact, explicitly mention the source (e.g., 'as per IMD Bulletin').  
+    If you cannot answer from the context, you may answer from your own knowledge, but BEGIN your answer with:  
+    "⚠️ This answer is not grounded in the retrieved data. Please verify independently."
 
-CONTEXT:
-{context}
+    CONTEXT:
+    {context}
 
-QUESTION:
-{user_query}
+    QUESTION:
+    {user_query}
 
-ANSWER:
-"""
+    ANSWER:
+    """
 
 # === RAG Query Function ===
 def generate_answer(user_query, k=3):
