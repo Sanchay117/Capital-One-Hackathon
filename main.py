@@ -3,6 +3,13 @@ from sentence_transformers import SentenceTransformer
 import faiss
 import json
 import numpy as np
+import os
+from dotenv import load_dotenv
+
+# === Load ENV Variables ===
+load_dotenv()
+
+HF_API_KEY = os.environ["HUGGING_FACE_API_KEY"]
 
 # === Load Embedding Model ===
 embedder = SentenceTransformer("all-MiniLM-L6-v2")
@@ -20,8 +27,8 @@ index.add(np.array(embeddings))
 
 # === Hugging Face LLM Client ===
 client = InferenceClient(
-    model="google/gemma-7b-it",
-    token="hf_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"  # <---- your HF token here
+    model="HuggingFaceH4/zephyr-7b-alpha",
+    token=HF_API_KEY
 )
 
 # === Helper to Build Numbered, Sourced Context ===
@@ -64,7 +71,7 @@ def generate_answer(user_query, k=3):
         prompt=prompt,
         max_new_tokens=200,
         temperature=0.2,
-        stop_sequences=["\n"]
+        stop=["\n"]
     )
     return output.strip()
 
@@ -79,3 +86,4 @@ if __name__ == "__main__":
         except KeyboardInterrupt:
             print("\n👋 Exiting.")
             break
+
