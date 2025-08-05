@@ -6,7 +6,7 @@ import faiss, json, numpy as np
 llm = Llama(
     model_path="./models/mistral-7b-instruct-v0.1.Q5_K_M.gguf",
     n_ctx=2048,
-    n_threads=6,  # use your core count
+    n_threads=12,  # use your core count
     n_gpu_layers=33  # offload as much to GPU as fits
 )
 
@@ -29,15 +29,15 @@ def generate_answer(user_query):
     context = "\n".join(docs[i]["text"] for i in I[0])
 
     prompt = f"""You are an agriculture assistant for Indian farmers.
-Answer clearly and only using the facts from the context.
+        Answer clearly and only using the facts from the context.
 
-Context:
-{context}
+        Context:
+        {context}
 
-Question:
-{user_query}
+        Question:
+        {user_query}
 
-Answer:"""
+        Answer:"""
 
     result = llm(prompt, max_tokens=200, temperature=0.2)
     return result["choices"][0]["text"]
