@@ -19,6 +19,8 @@ import requests
 from bs4 import BeautifulSoup
 from pypdf import PdfReader
 from io import BytesIO
+from pdf2image import convert_from_bytes
+import pytesseract
 
 # ─── Config ──────────────────────────────────────────────────────────────────
 OUTPUT_FILE = pathlib.Path("../test.jsonl")
@@ -38,13 +40,22 @@ def extract_sentences(text):
     return [s.strip() for s in parts if MIN_LEN < len(s) < MAX_LEN]
 
 def extract_pdf_text(pdf_bytes):
+    # First try the fast pypdf route
     reader = PdfReader(BytesIO(pdf_bytes))
-    pages = []
+    pages_text = []
     for page in reader.pages:
-        txt = page.extract_text()
-        if txt:
-            pages.append(txt.replace('\n', ' '))
-    return " ".join(pages)
+        txt = page.extract_text() or ""
+        pages_text.append(txt.replace('\n', ' '))
+    full_txt = " ".join(pages_text).strip()
+    if len(full_txt) > 100:
+        return full_txt
+
+    # Fallback to OCR if embedded text is too short
+    images = convert_from_bytes(pdf_bytes, dpi=200)
+    ocr_text = []
+    for img in images:
+        ocr_text.append(pytesseract.image_to_string(img))
+    return " ".join(ocr_text).replace('\n', ' ')
 
 def extract_html_text(html):
     soup = BeautifulSoup(html, "html.parser")
