@@ -5,18 +5,26 @@ scrape.py
 Usage:
     python scrape.py https://example.com [max_pages]
 
-Crawls the given site (same domain only), extracts text, splits into sentences,
-and writes JSONL records to tasks.jsonl with fields {"text", "source"}.
+Crawls the given site (same domain only), fetches HTML & PDF pages,
+extracts text, splits into sentences, and writes JSONL records to data.jsonl
+with fields {"text", "source"}.
 """
 
-import sys
-import re
-import json
+import sys, re, json, time
+from collections import deque
+from urllib.parse import urlparse, urljoin
+import pathlib
+
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import urlparse, urljoin
-from collections import deque
-import pathlib
+from pypdf import PdfReader
+from io import BytesIO
+
+# ─── Config ──────────────────────────────────────────────────────────────────
+OUTPUT_FILE = pathlib.Path("../test.jsonl")
+MIN_LEN, MAX_LEN = 40, 300           # sentence length bounds
+CRAWL_DELAY = 1.0                    # seconds between requests
+# ─────────────────────────────────────────────────────────────────────────────
 
 def get_domain(url):
     return urlparse(url).netloc
@@ -25,45 +33,68 @@ def normalize_url(base, link):
     return urljoin(base, link.split('#')[0])
 
 def extract_sentences(text):
-    # simple sentence splitter; tweak regex if needed
-    return [s.strip() for s in re.split(r'(?<=[.!?])\s+', text) if 40 < len(s) < 300]
+    # simple sentence splitter; adjust if needed
+    parts = re.split(r'(?<=[.!?])\s+', text)
+    return [s.strip() for s in parts if MIN_LEN < len(s) < MAX_LEN]
+
+def extract_pdf_text(pdf_bytes):
+    reader = PdfReader(BytesIO(pdf_bytes))
+    pages = []
+    for page in reader.pages:
+        txt = page.extract_text()
+        if txt:
+            pages.append(txt.replace('\n', ' '))
+    return " ".join(pages)
+
+def extract_html_text(html):
+    soup = BeautifulSoup(html, "html.parser")
+    # remove scripts/styles
+    for tag in soup(["script", "style", "noscript"]):
+        tag.decompose()
+    return soup.get_text(separator=" ", strip=True)
 
 def crawl_site(start_url, max_pages=100):
     domain = get_domain(start_url)
     visited = set()
-    queue = deque([start_url])
-    pages = []
+    queue   = deque([start_url])
+    pages   = []
 
     while queue and len(visited) < max_pages:
         url = queue.popleft()
         if url in visited:
             continue
         visited.add(url)
+
         try:
-            resp = requests.get(url, timeout=10)
+            resp = requests.get(url, timeout=10, headers={
+                "User-Agent": "MyAgriBot/1.0 (+mailto:you@domain)"
+            })
             resp.raise_for_status()
         except Exception as e:
-            print(f"⚠️  Failed to fetch {url}: {e}", file=sys.stderr)
+            print(f"⚠️ Failed to fetch {url}: {e}", file=sys.stderr)
             continue
 
         print(f"✅ Crawled: {url}", file=sys.stderr)
-        pages.append((url, resp.text))
+        ctype = resp.headers.get("Content-Type", "").lower()
 
-        # find same-site links
-        soup = BeautifulSoup(resp.text, "html.parser")
-        for a in soup.find_all("a", href=True):
-            link = normalize_url(url, a['href'])
-            if get_domain(link) == domain and link not in visited:
-                queue.append(link)
+        if url.lower().endswith(".pdf") or "application/pdf" in ctype:
+            # PDF page
+            pages.append((url, resp.content, "pdf"))
+        else:
+            # HTML page
+            html = resp.text
+            pages.append((url, html, "html"))
+
+            # enqueue same-site links
+            soup = BeautifulSoup(html, "html.parser")
+            for a in soup.find_all("a", href=True):
+                link = normalize_url(url, a["href"])
+                if get_domain(link) == domain and link not in visited:
+                    queue.append(link)
+
+        time.sleep(CRAWL_DELAY)
 
     return pages
-
-def extract_text(html):
-    soup = BeautifulSoup(html, "html.parser")
-    # remove scripts/styles
-    for tag in soup(["script", "style", "noscript"]):
-        tag.decompose()
-    return soup.get_text(separator=' ', strip=True)
 
 def main():
     if len(sys.argv) < 2:
@@ -73,16 +104,18 @@ def main():
     start_url = sys.argv[1]
     max_pages = int(sys.argv[2]) if len(sys.argv) > 2 else 100
 
-    out_path = pathlib.Path("../data.jsonl")
-    with out_path.open("a", encoding="utf-8") as out_f:
-        for url, html in crawl_site(start_url, max_pages):
-            text = extract_text(html)
-            # print(url,html,text)
-            for sentence in extract_sentences(text):
-                record = {"text": sentence, "source": url}
-                out_f.write(json.dumps(record, ensure_ascii=False) + "\n")
+    with OUTPUT_FILE.open("a", encoding="utf-8") as out_f:
+        for url, content, kind in crawl_site(start_url, max_pages):
+            if kind == "pdf":
+                text = extract_pdf_text(content)
+            else:
+                text = extract_html_text(content)
 
-    print(f"\n✨ Finished. Appended records to {out_path}.")
+            for sentence in extract_sentences(text):
+                rec = {"text": sentence, "source": url}
+                out_f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+
+    print(f"\n✨ Finished. Appended records to {OUTPUT_FILE}")
 
 if __name__ == "__main__":
     main()
