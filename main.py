@@ -27,7 +27,7 @@ index.add(np.array(embeddings))
 
 # === Hugging Face LLM Client ===
 client = InferenceClient(
-    model="HuggingFaceH4/zephyr-7b-alpha",
+    model="microsoft/Phi-3-mini-4k-instruct",
     token=HF_API_KEY
 )
 
