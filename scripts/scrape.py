@@ -77,6 +77,7 @@ def main():
     with out_path.open("a", encoding="utf-8") as out_f:
         for url, html in crawl_site(start_url, max_pages):
             text = extract_text(html)
+            # print(url,html,text)
             for sentence in extract_sentences(text):
                 record = {"text": sentence, "source": url}
                 out_f.write(json.dumps(record, ensure_ascii=False) + "\n")
