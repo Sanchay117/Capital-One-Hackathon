@@ -23,7 +23,7 @@ from pdf2image import convert_from_bytes
 import pytesseract
 
 # ─── Config ──────────────────────────────────────────────────────────────────
-OUTPUT_FILE = pathlib.Path("../test.jsonl")
+OUTPUT_FILE = pathlib.Path("../data.jsonl")
 MIN_LEN, MAX_LEN = 40, 300           # sentence length bounds
 CRAWL_DELAY = 1.0                    # seconds between requests
 # ─────────────────────────────────────────────────────────────────────────────
@@ -96,11 +96,11 @@ def crawl_site(start_url, max_pages=100):
             html = resp.text
             pages.append((url, html, "html"))
 
-            # enqueue same-site links
+            # enqueue all links
             soup = BeautifulSoup(html, "html.parser")
             for a in soup.find_all("a", href=True):
                 link = normalize_url(url, a["href"])
-                if get_domain(link) == domain and link not in visited:
+                if link not in visited:
                     queue.append(link)
 
         time.sleep(CRAWL_DELAY)
