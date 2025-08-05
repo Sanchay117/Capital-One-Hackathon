@@ -73,7 +73,7 @@ def main():
     start_url = sys.argv[1]
     max_pages = int(sys.argv[2]) if len(sys.argv) > 2 else 100
 
-    out_path = pathlib.Path("../tasks2.jsonl")
+    out_path = pathlib.Path("../data.jsonl")
     with out_path.open("a", encoding="utf-8") as out_f:
         for url, html in crawl_site(start_url, max_pages):
             text = extract_text(html)
