@@ -23,7 +23,7 @@ from pdf2image import convert_from_bytes
 import pytesseract
 
 # ─── Config ──────────────────────────────────────────────────────────────────
-OUTPUT_FILE = pathlib.Path("../data.jsonl")
+OUTPUT_FILE = pathlib.Path("../test.jsonl")
 MIN_LEN, MAX_LEN = 40, 300           # sentence length bounds
 CRAWL_DELAY = 1.0                    # seconds between requests
 # ─────────────────────────────────────────────────────────────────────────────
