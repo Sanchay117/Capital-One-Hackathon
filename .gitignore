@@ -1,2 +1,18 @@
 models/
 .env
+
+# Python virtual environments
+.venv/
+venv/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# macOS
+.DS_Store
+
+# IDE configs
+.vscode/
+.idea/
