@@ -1,0 +1,122 @@
+#!/usr/bin/env python3
+"""
+scrape.py
+
+Usage:
+    python scrape_chunks.py https://example.com [max_pages]
+
+Crawls the given site (same domain only), fetches HTML & PDF pages,
+extracts text, splits into sentences, and writes JSONL records to data.jsonl
+with fields {"text", "source"}.
+"""
+
+import sys, re, json, time
+from collections import deque
+from urllib.parse import urlparse, urljoin
+import pathlib
+
+import requests
+from bs4 import BeautifulSoup
+from pypdf import PdfReader
+from io import BytesIO
+from pdf2image import convert_from_bytes
+import pytesseract
+
+# ─── Config ──────────────────────────────────────────────────────────────────
+OUTPUT_FILE = pathlib.Path("../data.jsonl")
+MIN_LEN, MAX_LEN = 40, 300           # sentence length bounds
+CRAWL_DELAY = 1.0                    # seconds between requests
+# ─────────────────────────────────────────────────────────────────────────────
+
+def get_domain(url):
+    return urlparse(url).netloc
+
+def normalize_url(base, link):
+    return urljoin(base, link.split('#')[0])
+
+def extract_chunks(text, window=3, stride=2):
+    # Split into sentences
+    sentences = re.split(r'(?<=[.!?])\s+', text)
+    chunks = []
+    i = 0
+    while i < len(sentences):
+        chunk = ' '.join(sentences[i:i+window])
+        if MIN_LEN < len(chunk) < 1000:
+            chunks.append(chunk)
+        i += stride
+    return chunks
+
+
+def extract_html_text(html):
+    soup = BeautifulSoup(html, "html.parser")
+    # remove scripts/styles
+    for tag in soup(["script", "style", "noscript"]):
+        tag.decompose()
+    return soup.get_text(separator=" ", strip=True)
+
+def crawl_site(start_url, max_pages=100):
+    domain = get_domain(start_url)
+    visited = set()
+    queue   = deque([start_url])
+    pages   = []
+
+    while queue and len(visited) < max_pages:
+        url = queue.popleft()
+        if url in visited:
+            continue
+        visited.add(url)
+
+        try:
+            resp = requests.get(url, timeout=10, headers={
+                "User-Agent": "MyAgriBot/1.0 (+mailto:sanchay072@gmail.com)"
+            })
+            resp.raise_for_status()
+        except Exception as e:
+            print(f"⚠️ Failed to fetch {url}: {e}", file=sys.stderr)
+            continue
+
+        print(f"✅ Crawled: {url}", file=sys.stderr)
+        ctype = resp.headers.get("Content-Type", "").lower()
+
+        if url.lower().endswith(".pdf") or "application/pdf" in ctype:
+            # PDF page
+            pages.append((url, resp.content, "pdf"))
+        else:
+            # HTML page
+            html = resp.text
+            pages.append((url, html, "html"))
+
+            # enqueue all links
+            soup = BeautifulSoup(html, "html.parser")
+            for a in soup.find_all("a", href=True):
+                link = normalize_url(url, a["href"])
+                if link not in visited:
+                    queue.append(link)
+
+        time.sleep(CRAWL_DELAY)
+
+    return pages
+
+def main():
+    if len(sys.argv) < 2:
+        print(__doc__)
+        sys.exit(1)
+
+    start_url = sys.argv[1]
+    max_pages = int(sys.argv[2]) if len(sys.argv) > 2 else 100
+
+    with OUTPUT_FILE.open("a", encoding="utf-8") as out_f:
+        for url, content, kind in crawl_site(start_url, max_pages):
+            if kind == "pdf":
+                continue
+            else:
+                text = extract_html_text(content)
+
+            for sentence in extract_chunks(text):
+                rec = {"text": sentence, "source": url}
+                out_f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+
+    print(f"\n✨ Finished. Appended records to {OUTPUT_FILE}")
+
+if __name__ == "__main__":
+    main()
