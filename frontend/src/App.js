@@ -1,12 +1,10 @@
-// src/App.js
-
 import React, { useState, useRef } from 'react';
 import './App.css';
 import ChatInterface from './components/ChatInterface';
 import InputArea from './components/InputArea';
 import OnScreenKeyboard from './components/OnScreenKeyboard';
-import LanguageSelector from './components/LanguageSelector'; // Import the new component
-import { translations } from './translations'; // Import the translations
+import LanguageSelector from './components/LanguageSelector';
+import { translations } from './translations';
 
 function App() {
   const [messages, setMessages] = useState([]);
@@ -15,15 +13,16 @@ function App() {
   const [isChatActive, setIsChatActive] = useState(false);
   const [globalLanguage, setGlobalLanguage] = useState('en');
   const [isRecording, setIsRecording] = useState(false);
-  const mediaRecorder = useRef(null); 
+  const mediaRecorder = useRef(null);
   const audioChunks = useRef([]);
 
+  // ... (All your functions like startRecording, stopRecording, etc. remain unchanged)
   const startRecording = () => {
     navigator.mediaDevices.getUserMedia({ audio: true })
       .then(stream => {
         const recorder = new MediaRecorder(stream);
         mediaRecorder.current = recorder;
-        audioChunks.current = []; // Clear previous recording chunks
+        audioChunks.current = [];
 
         recorder.ondataavailable = event => {
           audioChunks.current.push(event.data);
@@ -31,19 +30,14 @@ function App() {
 
          recorder.onstop = () => {
           const audioBlob = new Blob(audioChunks.current, { type: 'audio/webm' });
-          const languageCode = translations[globalLanguage].languageCode; // Get the correct language code!
+          const languageCode = translations[globalLanguage].languageCode;
           
-          // --- REAL IMPLEMENTATION (replaces the old simulation) ---
-          
-          // 1. Create FormData to send both the file and the language code
           const formData = new FormData();
           formData.append('audioFile', audioBlob);
           formData.append('language', languageCode);
 
           console.log(`Preparing to send audio for transcription in language: ${languageCode}`);
 
-          // 2. Use 'fetch' to send the data to your backend endpoint
-          // (This endpoint '/api/transcribe' is hypothetical and needs to be created on your server)
           fetch('/api/transcribe', {
             method: 'POST',
             body: formData,
@@ -52,23 +46,18 @@ function App() {
             if (!response.ok) {
               throw new Error('Network response was not ok');
             }
-            return response.json(); // Expect a JSON response with the text
+            return response.json();
           })
           .then(data => {
-            // 3. Set the input with the transcribed text from the server
             console.log('Transcription received:', data.transcribedText);
             setInput(data.transcribedText);
             if (!isChatActive) setIsChatActive(true);
           })
           .catch(err => {
             console.error("Error during transcription:", err);
-            // If transcription fails, notify the user.
             setInput("Sorry, I couldn't understand that. Please try again.");
           });
-
-          // --- END OF REAL IMPLEMENTATION ---
           
-          // Clean up the stream tracks
           stream.getTracks().forEach(track => track.stop());
         };
 
@@ -106,7 +95,6 @@ function App() {
     setInput('');
 
     setTimeout(() => {
-      // Use the translations file for AI responses
       const aiText = messages.length === 0 
         ? translations[globalLanguage].welcomeMessage
         : translations[globalLanguage].sampleResponse;
@@ -126,20 +114,23 @@ function App() {
     }
   };
 
+
   const containerClassName = `app-container ${isChatActive ? 'chat-active' : 'chat-inactive'}`;
-  const currentTranslation = translations[globalLanguage]; // Get the current language text object
+  const currentTranslation = translations[globalLanguage];
 
   return (
       <div className={containerClassName}>
-        <LanguageSelector setGlobalLanguage={setGlobalLanguage} />
         <main className="main-content">
+          {/* The header now contains both the title and the single language selector */}
           <header className="app-header"> 
               <div className="header-content">
-                <h1>Agri-Advisor AI</h1> {/* This part is not translated */}
-                <p>{currentTranslation.subtitle}</p> {/* Subtitle is translated */}
+                <h1>Agri-Advisor AI</h1>
+                <p>{currentTranslation.subtitle}</p>
               </div>
+              {/* THIS IS THE ONLY INSTANCE of LanguageSelector */}
               <LanguageSelector setGlobalLanguage={setGlobalLanguage} />
           </header>
+
           <div className="input-area-wrapper">
             <InputArea
               input={input}
@@ -150,7 +141,6 @@ function App() {
               tooltipAudio={currentTranslation.tooltipAudio}
               tooltipKeyboard={currentTranslation.tooltipKeyboard}
               tooltipSend={currentTranslation.tooltipSend}
-              // Pass the new state and handler
               isRecording={isRecording}
               handleAudioClick={handleAudioClick}
             />
