@@ -23,7 +23,7 @@ from pdf2image import convert_from_bytes
 import pytesseract
 
 # ─── Config ──────────────────────────────────────────────────────────────────
-OUTPUT_FILE = pathlib.Path("../data.jsonl")
+OUTPUT_FILE = pathlib.Path("../data_v2.jsonl")
 MIN_LEN, MAX_LEN = 40, 300           # sentence length bounds
 CRAWL_DELAY = 1.0                    # seconds between requests
 # ─────────────────────────────────────────────────────────────────────────────
@@ -32,7 +32,18 @@ def get_domain(url):
     return urlparse(url).netloc
 
 def normalize_url(base, link):
-    return urljoin(base, link.split('#')[0])
+    if not link or link.startswith(("#", "mailto:", "javascript:", "tel:")):
+        return None
+    try:
+        abs_url = urljoin(base, link.split("#")[0])
+        parsed  = urlparse(abs_url)
+        if parsed.scheme not in ("http", "https"):
+            return None            # skip ftp:, file:, etc.
+        return abs_url
+    except ValueError:
+        # Covers “Invalid IPv6 URL” and any malformed URI
+        print("😵❌😵 Invalid URL 😵❌😵")
+        return None
 
 def extract_chunks(text, window=3, stride=2):
     # Split into sentences
@@ -67,9 +78,7 @@ def crawl_site(start_url, max_pages=100):
         visited.add(url)
 
         try:
-            resp = requests.get(url, timeout=10, headers={
-                "User-Agent": "MyAgriBot/1.0 (+mailto:sanchay072@gmail.com)"
-            })
+            resp = requests.get(url, timeout=20)
             resp.raise_for_status()
         except Exception as e:
             print(f"⚠️ Failed to fetch {url}: {e}", file=sys.stderr)
@@ -90,7 +99,7 @@ def crawl_site(start_url, max_pages=100):
             soup = BeautifulSoup(html, "html.parser")
             for a in soup.find_all("a", href=True):
                 link = normalize_url(url, a["href"])
-                if link not in visited:
+                if link and get_domain(link) == domain and link not in visited:
                     queue.append(link)
 
         time.sleep(CRAWL_DELAY)
