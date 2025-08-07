@@ -10,7 +10,7 @@ const Sidebar = ({
     onLogout,
 }) => {
     return (
-        <div className={`sidebar ${isOpen ? 'open' : ''}`}>
+        <div className={`sidebar ${isOpen ? 'open' : 'closed'}`}>
             <div className="sidebar-header">
                 <h3>Chat History</h3>
                 <button className="sidebar-close-button" onClick={onClose}>
