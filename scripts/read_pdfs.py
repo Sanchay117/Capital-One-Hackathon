@@ -43,7 +43,7 @@ def build_corpus(base_dir, output_path, window_size=10, stride=5):
                     out_file.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
 if __name__ == "__main__":
-    BASE_DIR = "../datasets/agrollm_dataset/Agricultural_management"
+    BASE_DIR = "../datasets/agrollm_dataset/Agriculture_and_forestry"
     OUTPUT_FILE = "../test.jsonl"
     build_corpus(BASE_DIR, OUTPUT_FILE)
     print(f"✅ Written sliding-window corpus to {OUTPUT_FILE}")
