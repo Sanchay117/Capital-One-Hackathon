@@ -1,0 +1,178 @@
+/* Sets the background for the entire page */
+.auth-page-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  background: linear-gradient(135deg, #1A4314, #2A5D2A, #0F2027);
+  font-family: 'Poppins', sans-serif;
+}
+
+/* The floating card for the form */
+.auth-form-container {
+  max-width: 420px;
+  width: 100%;
+  padding: 40px;
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  color: #fff;
+  text-align: center;
+}
+
+.auth-title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.auth-subtitle {
+  font-size: 1rem;
+  font-weight: 300;
+  margin-bottom: 30px;
+  opacity: 0.8;
+}
+
+/* Google Button */
+.google-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 20px;
+  background-color: #fff;
+  color: #333;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+.google-button:hover {
+  background-color: #f1f1f1;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+/* THE FIX: Replaced .google-icon with styles for the SVG logo */
+.google-logo-svg {
+  margin-right: 12px;
+  height: 22px; /* Adjusted size for better visual balance */
+  width: 22px;
+}
+
+/* Divider "OR" */
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.divider-line {
+  flex-grow: 1;
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.divider-text {
+  padding: 0 15px;
+}
+
+/* Form inputs */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.input-group {
+  text-align: left;
+}
+
+.input-group label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.input-group input {
+  width: 100%;
+  padding: 12px 15px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 1rem;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  box-sizing: border-box;
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.3);
+}
+
+.input-group input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-toggle-icon {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Main Auth Button (Login/Signup) */
+.auth-button {
+  padding: 14px;
+  margin-top: 10px;
+  background: linear-gradient(90deg, #4CAF50, #2E7D32);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.3s;
+}
+
+.auth-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+}
+
+/* Bottom toggle link */
+.toggle-link-container {
+  margin-top: 30px;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.toggle-link {
+  color: #66BB6A;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
