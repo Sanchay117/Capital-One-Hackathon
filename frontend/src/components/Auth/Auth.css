@@ -5,8 +5,13 @@
   align-items: center;
   min-height: 100vh;
   padding: 20px;
-  background: linear-gradient(135deg, #1A4314, #2A5D2A, #0F2027);
   font-family: 'Poppins', sans-serif;
+
+  /* THE SWAP: Using the image from the main app as the background.
+     Note the updated path to the image asset and a slightly darker overlay for readability. */
+  background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('../../Assets/background.jpg');
+  background-size: cover;
+  background-position: center;
 }
 
 /* The floating card for the form */
@@ -14,7 +19,7 @@
   max-width: 420px;
   width: 100%;
   padding: 40px;
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(0, 0, 0, 0.35); /* Slightly increased opacity for better contrast */
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 20px;
@@ -59,10 +64,9 @@
   box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
-/* THE FIX: Replaced .google-icon with styles for the SVG logo */
 .google-logo-svg {
   margin-right: 12px;
-  height: 22px; /* Adjusted size for better visual balance */
+  height: 22px;
   width: 22px;
 }
 
