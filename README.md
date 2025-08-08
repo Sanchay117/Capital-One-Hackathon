@@ -1,4 +1,260 @@
 ### Datasets Used
 
-[Agrollm Dataset (Kaggle)](https://www.kaggle.com/datasets/viswambhar/agrollm-data)
-[Crop Recommendation (Kaggle)](https://www.kaggle.com/datasets/saganachinnathambi/crop-recommendation)
+-   [Agrollm Dataset (Kaggle)](https://www.kaggle.com/datasets/viswambhar/agrollm-data)
+-   [Crop Recommendation (Kaggle)](https://www.kaggle.com/datasets/saganachinnathambi/crop-recommendation)
+
+### Websites Scraped
+
+-   metnet.imd.gov.in 4373 indexes
+    -   https://metnet.imd.gov.in/docs/imdnews/10April-June20172English.pdf
+    -   https://metnet.imd.gov.in/docs/imdnews/10Jan-March20171English.pdf
+    -   https://metnet.imd.gov.in/docs/imdnews/10July-Sept20173English.pdf
+    -   https://metnet.imd.gov.in/docs/imdnews/10Oct-Dec20174English.pdf
+    -   https://metnet.imd.gov.in/docs/imdnews/11April-June20182English.pdf
+-   icar.org.in 3251 indexes
+    -   https://www.icar.org.in/hi/administration-0
+    -   https://www.icar.org.in/hi/agricultural-education-division/agricultural-education-division
+    -   https://www.icar.org.in/hi/aicrps-network-projects
+    -   https://www.icar.org.in/hi/aienaelaiedai-kaarayasaalaa-nae-bhaarata-maen-pasaudhana-raoga-maodalainga-kao-saudardha-banaanae
+    -   https://www.icar.org.in/hi/anjaira-kai-khaetai-raajasathaana-kae-thaara-kasaetara-maen-laabha-arajaita-karanae-kai-talaasa-0
+-   mausam.imd.gov.in 3244 indexes
+    -   https://mausam.imd.gov.in/
+    -   https://mausam.imd.gov.in/Forecast/login.php
+    -   https://mausam.imd.gov.in/Forecast/marquee_data/API_doc.pdf
+    -   https://mausam.imd.gov.in/Forecast/marquee_data/ERF 24.07.25.pdf
+    -   https://mausam.imd.gov.in/Forecast/marquee_data/Press Release 05-08-2025 -.pdf
+-   nabard.org 1019 indexes
+    -   https://www.nabard.org/EngDefault.aspx
+    -   https://www.nabard.org/G20/index.aspx
+    -   https://www.nabard.org/Hindi/G20/index.aspx
+    -   https://www.nabard.org/Hindi/Tenders.aspx?cid=501&id=24
+    -   https://www.nabard.org/Hindi/about-departments.aspx?id=5&cid=16
+-   fao.org 734 indexes
+    -   http://www.fao.org/about/en/
+    -   http://www.fao.org/countryprofiles/en/
+    -   http://www.fao.org/giews/english/index.htm
+    -   http://www.fao.org/news/en/
+    -   http://www.fao.org/partnerships/en/
+-   agmarknet.gov.in 550 indexes
+    -   https://agmarknet.gov.in/
+    -   https://agmarknet.gov.in/CommodityProfiles/Default.aspx
+    -   https://agmarknet.gov.in/CommodityWiseGraph/ComGraphBoard.aspx
+    -   https://agmarknet.gov.in/ConatctUs/Default.aspx
+    -   https://agmarknet.gov.in/ConatctUs/Feedback.aspx
+-   imdpune.gov.in 545 indexes
+    -   https://imdpune.gov.in/caui/health.pdf
+    -   https://imdpune.gov.in/training/index.php
+    -   https://www.imdpune.gov.in/home/125%20years%20of%20service%20to%20the%20%20nation.pdf
+-   openknowledge.fao.org 493 indexes
+    -   https://openknowledge.fao.org/handle/20.500.14283/CD3614EN
+    -   https://openknowledge.fao.org/items/03d3e3bb-518f-493f-bcce-753313f5a8d5
+    -   https://openknowledge.fao.org/items/0d055c8e-03aa-4fde-8510-b601c945e874
+    -   https://openknowledge.fao.org/items/1a93f4bc-493c-431a-8d06-8030ef0ab7e0
+    -   https://openknowledge.fao.org/items/50f23fdd-9427-4f64-b266-87b3e7f41a5d
+-   fert.gov.in 418 indexes
+    -   https://fert.gov.in/
+    -   https://fert.gov.in/connect/contact-us
+    -   https://fert.gov.in/connect/grievance-redressal
+    -   https://fert.gov.in/connect/rti-cell
+    -   https://fert.gov.in/connect/telephone-directory
+-   internal.imd.gov.in 255 indexes
+    -   https://internal.imd.gov.in/advertisements/20240605_advt_105.pdf
+    -   https://internal.imd.gov.in/pages/city_weather_main_mausam.php
+    -   https://internal.imd.gov.in/pages/press_release_mausam.php
+    -   https://internal.imd.gov.in/pages/recruits_mausam.php?id=1
+    -   https://internal.imd.gov.in/pages/recruits_mausam.php?id=2
+-   cdn.digitalindiacorporation.in 176 indexes
+    -   https://cdn.digitalindiacorporation.in/wp-content/uploads/2024/11/DIGILOCKER-ASK-EXPERT-.pdf
+    -   https://cdn.digitalindiacorporation.in/wp-content/uploads/2025/01/Draft-Digital-Personal-Data-Protection-Rules2025.pdf
+    -   https://cdn.digitalindiacorporation.in/wp-content/uploads/2025/01/Explanatory-Note-DPDP-Rules-2025.pdf
+    -   https://cdn.digitalindiacorporation.in/wp-content/uploads/2025/05/e8c4c7ed-537e-427c-b17c-56c0c064533b_compressed.pdf
+-   youtube.com 162 indexes
+    -   http://www.youtube.com/user/FAOoftheUN
+    -   https://www.youtube.com/
+    -   https://www.youtube.com/@copac7354
+    -   https://www.youtube.com/@doffertilizer255
+    -   https://www.youtube.com/about/
+-   imdweather1875.wordpress.com 155 indexes
+    -   https://imdweather1875.wordpress.com
+    -   https://imdweather1875.wordpress.com/
+    -   https://imdweather1875.wordpress.com/2021/10/19/recent-advances-in-early-warning-services-of-india-meteorological-department/
+    -   https://imdweather1875.wordpress.com/2021/10/20/aviation-meteorological-services-provided-by-the-india-meteorological-departmentimd-pre-and-post-independence/
+    -   https://imdweather1875.wordpress.com/2021/10/20/blog-on-ipcc-sixth-assessment-report-ar-6/
+-   data.gov.in 142 indexes
+    -   https://www.data.gov.in/
+    -   https://www.data.gov.in/Accessibility
+    -   https://www.data.gov.in/Godl
+    -   https://www.data.gov.in/Suggest_Dataset
+    -   https://www.data.gov.in/about
+-   2025.coop 134 indexes
+    -   http://www.2025.coop/national-mechanisms
+    -   https://2025.coop/
+    -   https://2025.coop/2025/03/
+    -   https://2025.coop/2025/03/17/new-brief-cooperatives-as-engines-of-social-justice/
+    -   https://2025.coop/2025/04/
+-   digitalindia.gov.in 128 indexes
+    -   http://www.digitalindia.gov.in/
+    -   https://digitalindia.gov.in/
+    -   https://www.digitalindia.gov.in
+    -   https://www.digitalindia.gov.in/
+    -   https://www.digitalindia.gov.in/?post_type=press_release&p=9124&preview=true
+-   pmkisan.gov.in 110 indexes
+    -   https://pmkisan.gov.in/
+    -   https://pmkisan.gov.in/BeneficiaryStatus_New.aspx
+    -   https://pmkisan.gov.in/Contacts.aspx
+    -   https://pmkisan.gov.in/CopyrightPolicy.aspx
+    -   https://pmkisan.gov.in/Creatives.aspx
+-   epubs.icar.org.in 54 indexes
+    -   https://epubs.icar.org.in/
+-   automattic.com 36 indexes
+    -   https://automattic.com/cookies/
+-   ica.coop 33 indexes
+    -   https://ica.coop/
+    -   https://ica.coop/en
+    -   https://www.ica.coop/
+-   linkedin.com 33 indexes
+    -   http://www.linkedin.com/company/fao
+    -   https://www.linkedin.com/company/copaccoop/
+    -   https://www.linkedin.com/company/fao
+    -   https://www.linkedin.com/shareArticle?mini=true&title=Home&url=https://www.fao.org/home/en
+-   play.google.com 31 indexes
+    -   https://play.google.com/store/apps/details?id=com.aas.meghdoot
+    -   https://play.google.com/store/apps/details?id=com.imd.masuam
+    -   https://play.google.com/store/apps/details?id=com.lightening.live.damini
+    -   https://play.google.com/store/apps/details?id=com.mausam.crowdsource
+    -   https://play.google.com/store/apps/details?id=in.gov.umang.negd.g2c
+-   apps.apple.com 24 indexes
+    -   https://apps.apple.com/in/app/meghdoot/id1474048155
+    -   https://apps.apple.com/in/app/public-observation-imd/id1618055762
+    -   https://apps.apple.com/in/app/umang/id1236448857
+    -   https://apps.apple.com/us/app/id1522893967
+-   blog.mygov.in 21 indexes
+    -   https://blog.mygov.in/editorial/celebrating-150-years-of-excellence-a-journey-of-the-india-meteorological-department/
+-   copac.coop 17 indexes
+    -   http://www.copac.coop
+    -   https://www.copac.coop/
+    -   https://www.copac.coop/wp-content/uploads/2024/10/IYC-2025-Visual_Identity_Guidelines.pdf
+-   un.org 12 indexes
+    -   https://www.un.org/en/desa
+-   ifdc.org 12 indexes
+    -   https://ifdc.org/
+-   pib.gov.in 11 indexes
+    -   https://www.pib.gov.in/PressReleasePage.aspx?PRID=2110419
+-   wordpress.com 11 indexes
+    -   https://wordpress.com/?ref=footer_blog
+    -   https://wordpress.com/?ref=footer_website
+    -   https://wordpress.com/abuse/?report_url=https://imdweather1875.wordpress.com
+-   egramswaraj.gov.in 11 indexes
+    -   https://egramswaraj.gov.in/mausam.do
+-   dsp.imdpune.gov.in 10 indexes
+    -   http://dsp.imdpune.gov.in/
+    -   https://dsp.imdpune.gov.in/
+-   api.whatsapp.com 9 indexes
+    -   https://api.whatsapp.com/send?text=Satellite%20-%20Picture!%20https://mausam.imd.gov.in/Radar/MOSAIC/Converted/mosaic.gif
+    -   https://api.whatsapp.com/send?text=Satellite%20-%20Picture!%20https://mausam.imd.gov.in/Satellite/3Dasiasec_ir1.jpg
+    -   https://api.whatsapp.com/send?text=Satellite%20-%20Picture!%20https://mausam.imd.gov.in/lightning/Converted/BT.gif
+-   faidelhi.org 9 indexes
+    -   https://www.faidelhi.org/
+-   facebook.com 8 indexes
+    -   http://www.facebook.com/pages/Food-and-Agriculture-Organization-of-the-United-Nations-FAO/46370758585?ref=mf
+    -   https://www.facebook.com/InAgrisearch/
+    -   https://www.facebook.com/India.Meteorological.Department/
+    -   https://www.facebook.com/pages/Food-and-Agriculture-Organization-of-the-United-Nations-FAO/46370758585?ref=mf
+    -   https://www.facebook.com/sharer/sharer.php?u=https://mausam.imd.gov.in/Radar/MOSAIC/Converted/mosaic.gif
+-   iyc.2025.coop 8 indexes
+    -   https://iyc.2025.coop/
+    -   https://iyc.2025.coop/submit-your-event/
+    -   https://iyc.2025.coop/view-all-events/
+-   fmb-group.co.uk 7 indexes
+    -   https://fmb-group.co.uk/
+-   gem.gov.in 7 indexes
+    -   https://gem.gov.in/
+-   bit.ly 6 indexes
+    -   https://bit.ly/3BBpfEq
+    -   https://bit.ly/CGWebsiteCoop25
+-   imdagrimet.gov.in 6 indexes
+    -   https://imdagrimet.gov.in
+-   fert.1akal.in 6 indexes
+    -   https://fert.1akal.in/staging/sites/default/files/2025-05/Notification_dated_07_05_2025_IIPL.pdf
+-   shebox.wcd.gov.in 5 indexes
+    -   https://shebox.wcd.gov.in/
+-   instagram.com 4 indexes
+    -   https://instagram.com/fao
+    -   https://instagram.com/fao/
+    -   https://instagram.com/mausam_nwfc/
+    -   https://www.instagram.com/dof343/
+-   itunes.apple.com 4 indexes
+    -   https://itunes.apple.com/WebObjects/MZStore.woa/wa/viewSoftware?id=1502385645
+-   intracen.org 4 indexes
+    -   https://www.intracen.org/
+-   scholar.google.co.in 4 indexes
+    -   https://scholar.google.co.in/citations?user=OExVVT4AAAAJ&hl=en&oi=ao
+-   pgportal.gov.in 4 indexes
+    -   https://pgportal.gov.in/
+-   mygov.in 4 indexes
+    -   https://www.mygov.in/
+-   negd.gov.in 4 indexes
+    -   https://negd.gov.in/training-schedule/
+-   nwp.imd.gov.in 3 indexes
+    -   http://nwp.imd.gov.in/gfsfront_cycle00_mausam.php
+    -   http://nwp.imd.gov.in/gfsproducts_cycle00_mausam.php
+    -   https://nwp.imd.gov.in/silam_imd.php
+-   cap-sources.s3.amazonaws.com 3 indexes
+    -   https://cap-sources.s3.amazonaws.com/in-imd-en/rss.xml
+-   stories.coop 3 indexes
+    -   https://stories.coop/
+-   youtu.be 3 indexes
+    -   https://youtu.be/VhYsmXz9aMk
+    -   https://youtu.be/jMGwGLf9LDU?si=qPbuHxwtlsltL6Da
+    -   https://youtu.be/jZwPIMk-HoM?si=tmwv3IGOAsDoRuKq
+-   twitter.com 3 indexes
+    -   https://twitter.com/hashtag/SoilHealth?src=hash&ref_src=twsrc%5Etfw
+    -   https://twitter.com/hashtag/agriculture?src=hash&ref_src=twsrc%5Etfw
+    -   https://twitter.com/hashtag/farmer?src=hash&ref_src=twsrc%5Etfw
+-   ebook.icar.org.in 3 indexes
+    -   https://ebook.icar.org.in/index.php/bookprocess
+-   srf.tropmet.res.in 2 indexes
+    -   http://srf.tropmet.res.in/srf/ts_prediction_system/index.php
+-   developers.google.com 2 indexes
+    -   https://developers.google.com/youtube
+-   coopsday.coop 2 indexes
+    -   https://www.coopsday.coop/
+-   mkisan.gov.in 2 indexes
+    -   https://mkisan.gov.in/Alpha/default.aspx
+-   trifed.in 2 indexes
+    -   http://www.trifed.in/trifed/%28S%28fee0dtczxaeamr54sbmlkpwa%29%29/default.aspx
+-   msamb.com 2 indexes
+    -   https://www.msamb.com/
+-   soundcloud.com 2 indexes
+    -   https://soundcloud.com/unfao
+    -   https://soundcloud.com/unfao/fao-impact-binta-en
+-   podcasts.apple.com 2 indexes
+    -   https://podcasts.apple.com/us/podcast/fao-podcasts/id1106944351
+-   agripolicy 1 indexes
+    -   AgriPolicy
+-   imd bulletin 1 indexes
+    -   IMD Bulletin
+-   sanchay singh 1 indexes
+    -   Sanchay Singh
+-   imdgeospatial.imd.gov.in 1 indexes
+    -   http://imdgeospatial.imd.gov.in/
+-   subscribe.wordpress.com 1 indexes
+    -   https://subscribe.wordpress.com/
+-   undocs.org 1 indexes
+    -   https://www.undocs.org/Home/Mobile?FinalSymbol=A%2FRES%2F78%2F289&Language=E&DeviceType=Desktop&LangRequested=False
+-   forms.gle 1 indexes
+    -   https://forms.gle/6hreBC1MSTJboeC59
+-   amsskolkata.gov.in 1 indexes
+    -   http://www.amsskolkata.gov.in
+-   agmarkonline.dmi.gov.in 1 indexes
+    -   https://agmarkonline.dmi.gov.in/DMI/
+-   pinterest.com 1 indexes
+    -   https://pinterest.com/pin/create/button/?url=https://www.fao.org/home/en&description=Home
+-   fb.watch 1 indexes
+    -   https://fb.watch/B3fdbdRSkQ
+-   worldbank.org 1 indexes
+    -   https://www.worldbank.org/ext/en/home
+-   t.co 1 indexes
+    -   https://t.co/0o0quNXxqw
+-   icar.dashboard.nic.in 1 indexes
+    -   https://icar.dashboard.nic.in/DashboardF.aspx
