@@ -2,6 +2,7 @@
 
 -   [Agrollm Dataset (Kaggle)](https://www.kaggle.com/datasets/viswambhar/agrollm-data)
 -   [Crop Recommendation (Kaggle)](https://www.kaggle.com/datasets/saganachinnathambi/crop-recommendation)
+-   [Wholesale Crop Price Dataset (2022–2023) (Kaggle)](https://www.kaggle.com/datasets/shraddhadeshmukh21/wholesale-crop-price-dataset-20222023)
 
 ### Websites Scraped
 

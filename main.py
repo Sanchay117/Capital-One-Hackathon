@@ -42,6 +42,11 @@ from dotenv import load_dotenv
 from sentence_transformers import SentenceTransformer, CrossEncoder
 from rank_bm25 import BM25Okapi
 from google import genai  # google-genai SDK
+from glob import glob  # add near other imports
+
+DATA_DIR = "./data"
+# load ALL jsonl shards, including your new data_v5__state.jsonl files
+DATA_GLOBS = ["*.jsonl"]   # you can narrow later: ["data.jsonl","data_v4__*.jsonl","data_v5__*.jsonl"]
 
 # ---------- Config ----------
 EMB_MODEL = "all-MiniLM-L6-v2"
@@ -146,31 +151,49 @@ def parse_query(q: str) -> Dict[str, Any]:
     }
 
 # ---------- Load docs ----------
-docs: List[Dict[str, Any]] = []
-for fname in DATA_FILES:
-    path = f"./data/{fname}.jsonl"
+docs = []
+files = []
+for pat in DATA_GLOBS:
+    files.extend(sorted(glob(os.path.join(DATA_DIR, pat))))
+
+if not files:
+    raise RuntimeError(f"No JSONL files found in {DATA_DIR} (patterns: {DATA_GLOBS})")
+
+total_lines = 0
+for path in files:
     try:
         with open(path, "r", encoding="utf-8") as f:
             for line in f:
+                line = line.strip()
+                if not line:
+                    continue
                 try:
                     docs.append(json.loads(line))
+                    total_lines += 1
                 except json.JSONDecodeError:
+                    # skip bad lines but keep going
                     continue
     except FileNotFoundError:
-        # silently skip missing shards
+        # ignore; glob might pick stale entries
         pass
 
 if not docs:
     raise RuntimeError("No documents loaded. Put your .jsonl chunks in ./data/")
 
-texts = [d.get("text","") for d in docs]
-meta  = [{
-    "source": d.get("source","unknown"),
+print(f"Loaded {len(docs)} documents from {len(files)} files.")
+
+# ---------- Build corpus arrays (REQUIRED before indexing) ----------
+texts = [d.get("text", "") for d in docs]
+
+meta = [{
+    "source": d.get("source", "unknown"),
     "state": (d.get("state") or "").lower() or None,
-    "district": (d.get("district") or "") or None,
-    "crop": (d.get("crop") or "") or None,
-    "season": (d.get("season") or "") or None,
-    "months": d.get("months") or None
+    "district": (d.get("district") or "").lower() or None,
+    "crop": (d.get("crop") or "").lower() or None,
+    "season": (d.get("season") or "").lower() or None,
+    # ensure months is a list like ["May"]
+    "months": (d.get("months") if isinstance(d.get("months"), list)
+               else ([d.get("months")] if d.get("months") else None)),
 } for d in docs]
 
 # ---------- Build indices ----------
