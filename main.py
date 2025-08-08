@@ -19,13 +19,13 @@ gemini = genai.Client(api_key=GEMINI_API_KEY)
 # === Embeddings & vector DB ==================================================
 embedder = SentenceTransformer("all-MiniLM-L6-v2")
 
-filenames = ["data.jsonl", "data_v2.jsonl", "data_v3.jsonl"]
+filenames = ["data", "data_v2", "data_v3","data_v4__part0","data_v4__part1"]
 docs = []
 
 
 for fname in filenames:
     try:
-        with open(fname, "r", encoding="utf-8") as f:
+        with open("./data/" + fname + ".jsonl", "r", encoding="utf-8") as f:
             # extend, don’t overwrite
             docs.extend(json.loads(line) for line in f)
     except FileNotFoundError:
