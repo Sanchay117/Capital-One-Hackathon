@@ -258,3 +258,9 @@
     -   https://t.co/0o0quNXxqw
 -   icar.dashboard.nic.in 1 indexes
     -   https://icar.dashboard.nic.in/DashboardF.aspx
+-   pib.gov.in 1443 indexes
+    -   https://www.pib.gov.in/Aboutarchive.aspx
+    -   https://www.pib.gov.in/AdvanceSearch.aspx
+    -   https://www.pib.gov.in/AllFactsheet.aspx?MenuId=12
+    -   https://www.pib.gov.in/AllInfographics.aspx?MenuId=716
+    -   https://www.pib.gov.in/AllMediaInvitation.aspx
