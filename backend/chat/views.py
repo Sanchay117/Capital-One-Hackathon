@@ -1,3 +1,4 @@
+from agriadvisor.utils import generate_answer
 from django.contrib.auth.models import User
 from rest_framework import generics, permissions, viewsets, status
 from rest_framework.response import Response
@@ -5,6 +6,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from .models import ChatMessage
 from .serializers import RegisterSerializer, ChatMessageSerializer
 from main import generate_answer
+from rest_framework.views import APIView
+from rest_framework.decorators import api_view, permission_classes  # add decorator imports
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -36,3 +39,22 @@ class ChatMessageViewSet(viewsets.ModelViewSet):
 
         data = ChatMessageSerializer([user_msg, ai_msg], many=True).data
         return Response(data, status=status.HTTP_201_CREATED)
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def prompt_view(request):
+    prompt_text = request.data.get('prompt', '').strip()
+    if not prompt_text:
+        return Response({'detail': 'Prompt is required.'}, status=status.HTTP_400_BAD_REQUEST)
+    answer = generate_answer(prompt_text)
+    return Response({'answer': answer}, status=status.HTTP_200_OK)
+
+class PromptAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        prompt = request.data.get('prompt', '').strip()
+        if not prompt:
+            return Response({'detail': 'Prompt is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        answer = generate_answer(prompt)
+        return Response({'answer': answer}, status=status.HTTP_200_OK)

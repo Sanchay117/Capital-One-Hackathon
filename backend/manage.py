@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Make parent directory (project root) importable so "import main" works
+
 def main():
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'agriadvisor.settings')
     try:
