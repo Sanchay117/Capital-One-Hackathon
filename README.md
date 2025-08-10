@@ -6,6 +6,7 @@
 -   [Monsoon Rainfall Trends – NW India (1901–2015)](https://www.kaggle.com/datasets/hmnshudhmn24/monsoon-rainfall-trends-nw-india-19012015)
 -   [Hyperparameter-Tuned Crop Yield ML Dataset](https://www.kaggle.com/datasets/aaryanmavaninew/hyperparameter-tuned-crop-yield-ml-dataset)
 -   [Crop Production Data ( Raw + Refined)](https://www.kaggle.com/datasets/kunshbhatia/crop-production-data-raw-refined)
+-   [Indian Government Schemes](https://www.kaggle.com/datasets/jainamgada45/indian-government-schemes)
 
 ### Websites Scraped
 
