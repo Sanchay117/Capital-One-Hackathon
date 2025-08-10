@@ -5,7 +5,10 @@ from typing import Optional, Dict, List
 
 # ---------- Paths (edit as needed) ----------
 CSV_PATH   = "../datasets/Agriculture_price_dataset.csv"
-OUT_PATH   = "../data/data_v10.jsonl"
+import math
+
+SHARDS = 10
+OUT_PREFIX = "../data/data_v10_part"   # will create files like data_v10_part01.jsonl, ...10.jsonl
 
 # Price unit label shown in the snippet
 PRICE_UNIT = "₹/qtl"   # change to match your source if different
@@ -95,6 +98,40 @@ def build_record(base: str, idx: int, r: Dict[str,str]) -> Dict:
         "price_date": when,
     }
 
+def convert_sharded(csv_path: str, out_prefix: str, shards: int = 10):
+    base = os.path.basename(csv_path)
+    os.makedirs(os.path.dirname(out_prefix), exist_ok=True)
+
+    # 1) Count data rows once to split evenly
+    with open(csv_path, newline="", encoding="utf-8") as f:
+        total_rows = sum(1 for _ in csv.DictReader(f))
+    rows_per_shard = max(1, math.ceil(total_rows / shards))
+
+    # 2) Stream rows and rotate files every rows_per_shard
+    shard_idx = 1
+    written_in_shard = 0
+    written_total = 0
+    out_path = f"{out_prefix}{shard_idx:02d}.jsonl"
+    out = open(out_path, "w", encoding="utf-8")
+
+    with open(csv_path, newline="", encoding="utf-8") as f:
+        rdr = csv.DictReader(f)
+        for i, row in enumerate(rdr):
+            if written_in_shard >= rows_per_shard and shard_idx < shards:
+                out.close()
+                shard_idx += 1
+                written_in_shard = 0
+                out_path = f"{out_prefix}{shard_idx:02d}.jsonl"
+                out = open(out_path, "w", encoding="utf-8")
+
+            rec = build_record(base, i, row)
+            out.write(json.dumps(rec, ensure_ascii=False) + "\n")
+            written_in_shard += 1
+            written_total += 1
+
+    out.close()
+    print(f"✅ {written_total} rows → up to {shards} shards at {out_prefix}XX.jsonl (~{rows_per_shard} rows/shard)")
+
 # ---------- Main ----------
 def convert(csv_path: str, out_path: str):
     base = os.path.basename(csv_path)
@@ -109,5 +146,5 @@ def convert(csv_path: str, out_path: str):
     print(f"✅ {n} → {out_path}")
 
 if __name__ == "__main__":
-    convert(CSV_PATH, OUT_PATH)
+    convert_sharded(CSV_PATH, OUT_PREFIX, SHARDS)
     print("🎉 Done.")
