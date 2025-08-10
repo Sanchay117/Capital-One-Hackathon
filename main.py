@@ -28,13 +28,15 @@ from google import genai  # google-genai SDK
 # ---------- Config ----------
 EMB_MODEL = "all-MiniLM-L6-v2"
 RERANK_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
-GEMINI_MODEL = "gemini-2.5-flash-lite"
+GEMINI_MODEL = "gemini-2.5-flash"
 
 MAX_CTX_SNIPPETS = 6
 EVIDENCE_MIN = 2
 RRF_K = 60
 TOP_K_FUSION = 50
 RERANK_KEEP = 12
+
+RESET_EVERY_QUERY = True
 
 # Optional Python BM25 (slow for ~850k docs). Keep OFF unless needed.
 USE_PY_BM25 = True
@@ -220,8 +222,13 @@ def _merge_signals(prev: Dict[str,Any] | None, new: Dict[str,Any]) -> Dict[str,A
 def merged_parse_query(q: str) -> Dict[str, Any]:
     global _LAST_SIGNALS
     fresh = parse_query(q)
+
+    if RESET_EVERY_QUERY:
+        _LAST_SIGNALS = fresh.copy()
+        return fresh
+
+    # (stateful mode – only used if you flip the flag off)
     cur = _merge_signals(_LAST_SIGNALS, fresh)
-    # if user asked a market/price question without naming a crop, don't reuse old crop
     if fresh.get("intent") == "market" and not fresh.get("crop"):
         cur["crop"] = None
     _LAST_SIGNALS = cur.copy()
@@ -416,34 +423,57 @@ def make_evidence(idxs: List[int], limit: int = MAX_CTX_SNIPPETS) -> List[Dict[s
         ev.append({"snippet": snip[:800], "source": src})
     return ev
 
-def build_prompt(evidence: List[Dict[str,str]], user_query: str, signals: Dict[str,Any]) -> str:
-    ctx = "\n---\n".join([f"{e['snippet']}\n(Source: {e['source']})" for e in evidence])
+def build_prompt(evidence, user_query, signals):
+    ctx = "\n".join(
+        [f"[S{i+1}] {e['snippet']}\n(Source: {e['source']})" for i, e in enumerate(evidence)]
+    )
     focus = []
     if signals.get("crop"):  focus.append(f"Crop: {signals['crop']}")
     if signals.get("state"): focus.append(f"State: {signals['state']}")
+    if signals.get("district"): focus.append(f"District: {signals['district']}")
     if signals.get("month"): focus.append(f"Month: {signals['month']}")
     if signals.get("year"):  focus.append(f"Year: {signals['year']}")
     focus_line = ("Focus → " + ", ".join(focus)) if focus else "Focus only on the user's query."
 
-    return f"""You are an agriculture assistant for Indian farmers.
+    return f"""
+        You are an agriculture assistant for Indian farmers.
 
-        POLICY
-        - {focus_line}. If EVIDENCE does not match this focus (especially the crop), ask ONE clarifying question and stop.
-        - Answer ONLY using EVIDENCE below; cite sources inline (title/section/page if present).
-        - Do NOT assume the current date/month. Mention months/years only if they appear in the USER QUESTION or EVIDENCE.
-        - Do NOT include market prices unless the user asks about price/market.
-        - Be concise and actionable: sowing window, varieties, seed rate, key cautions, next step.
+        MODE
+        - **Stateless**: Treat THIS USER QUESTION as a brand-new conversation. Ignore any chat history or prior turns entirely.
+
+        ROLE
+        - Prefer grounded answers that are explicitly supported by the EVIDENCE snippets.
+        - When evidence is thin, provide a brief best-effort overview, clearly labeled as **Unverified general guidance**.
+        - Never fabricate sources, links, or numbers. Only cite from EVIDENCE. If nothing is citable, say so.
+
+        CONSTRAINTS
+        - {focus_line}
+        - Do NOT assume the current date/month. Mention months/years only if present in USER QUESTION or EVIDENCE.
+        - Keep it concise and actionable (sowing window, varieties, seed rate, irrigation, cautions, next step).
+        - If the user asks for location/time-specific numeric data (e.g., market price, MSP by year/state, rainfall totals) that is **not in EVIDENCE**, do **not** guess numbers.
+
+        DECISION LOGIC
+        - If EVIDENCE has at least {EVIDENCE_MIN} relevant snippets AND they match the focus → write a **Grounded answer**.
+        - Tag each specific claim (numbers, dates, locations, varieties) with an inline citation like [S1], [S2] that maps to a snippet.
+        - Else:
+        - If a critical slot is missing (e.g., state/month/crop for sowing or market intents), ask **ONE** clarifying question and stop.
+        - Otherwise, write **Unverified general guidance**:
+            - Give high-level, widely accepted agronomy/policy advice for the question.
+            - Avoid specific local numbers or eligibility unless present in EVIDENCE.
+            - You may still give practical checklists/steps and general NPK guidance, but no invented figures.
+            - End this section with: “No matching sources retrieved in corpus.”
+
+        OUTPUT FORMAT
+        1) **Answer** — start with either “Grounded answer” or “Unverified general guidance”.
+        2) **Specifics** — bullets of concrete steps/parameters/checks. Tag grounded bullets with [S#].
+        3) **Assumptions & Caveats** — list anything you assumed and what would change the recommendation.
+        4) **Sources** — list only the [S#] you used, each as: [S#] → original `source` from EVIDENCE. If none: write “No matching sources retrieved in corpus.”
 
         EVIDENCE
         {ctx}
 
         USER QUESTION
         {user_query}
-
-        Now produce:
-        1) A brief recommendation tailored to the focus above
-        2) Bullet points with specifics (dates, varieties, seed rates, etc.)
-        3) A 'Sources' list with the sources used
     """
 
 def grounded_answer(q: str) -> str:
