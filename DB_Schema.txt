@@ -1,0 +1,81 @@
+-- Create a custom type for the input method for better readability
+CREATE TYPE input_method AS ENUM ('text', 'audio');
+
+-- =================================================================
+--  USERS TABLE
+--  Stores user credentials, preferences, and authentication details.
+-- =================================================================
+CREATE TABLE users (
+    -- Using UUID for a non-sequential, secure primary key
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    -- We'll add a separate email field as it's crucial for communication and password resets
+    email VARCHAR(255) UNIQUE NOT NULL,
+    username VARCHAR(150) UNIQUE, -- Can be nullable for Google-only signups
+
+    password_hash VARCHAR(255), -- Nullable for Google-only signups
+    google_id VARCHAR(255) UNIQUE, -- Nullable for password-based signups
+
+    -- Stores the user's preferred language code (e.g., 'en', 'hi-IN')
+    preferred_language VARCHAR(10) NOT NULL DEFAULT 'en',
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+    -- Ensures a user has at least one sign-up method
+    CONSTRAINT check_auth_method CHECK (password_hash IS NOT NULL OR google_id IS NOT NULL)
+);
+
+-- Indexes for fast lookups during login
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_google_id ON users(google_id);
+
+
+-- =================================================================
+--  CHATS TABLE
+--  Stores a "conversation session" for a user.
+-- =================================================================
+CREATE TABLE chats (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    -- Foreign key linking to the user who owns this chat
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+
+    -- Title for the sidebar, e.g., "Fertilizer recommendations..."
+    title VARCHAR(255) NOT NULL,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Index for quickly fetching all chats for a specific user
+CREATE INDEX idx_chats_user_id ON chats(user_id);
+
+
+-- =================================================================
+--  CHAT_MESSAGES TABLE
+--  Stores each prompt-and-response turn within a chat.
+-- =================================================================
+CREATE TABLE chat_messages (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    -- Foreign key linking to the parent chat
+    chat_id UUID NOT NULL REFERENCES chats(id) ON DELETE CASCADE,
+
+    -- The user's prompt (either typed or transcribed from audio)
+    prompt_text TEXT NOT NULL,
+
+    -- The AI's response
+    response_text TEXT NOT NULL,
+
+    -- Using the custom ENUM type is cleaner than 0/1 integers
+    input_type input_method NOT NULL,
+
+    -- Language of the user's input for this specific message
+    input_language VARCHAR(10) NOT NULL,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Index for quickly fetching all messages for a specific chat
+CREATE INDEX idx_chat_messages_chat_id ON chat_messages(chat_id);
