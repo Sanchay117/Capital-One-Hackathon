@@ -166,6 +166,8 @@ def detect_intent(q: str) -> str:
         return "market"
     if any(w in ql for w in ["fertilizer", "dose", "seed rate", "irrigat"]):
         return "pop_practice"
+    if any(w in ql for w in ["yield", "production", "area", "acreage", "fertilizer", "pesticide"]):
+        return "stats"
     return "general"
 
 def find_year(q: str) -> int | None:
@@ -285,6 +287,9 @@ def filter_pool(signals: Dict[str, Any]) -> List[int]:
     elif intent == "pop_practice":
         pop_pool = [i for i in pool if docs[i].get("metric") == "pop"]
         pool = pop_pool or pool
+    elif intent == "stats":
+        stats_pool = [i for i in pool if docs[i].get("metric") == "crop_stats"]
+        pool = stats_pool or pool
 
     # Year preference (soft)
     if signals.get("year") is not None:
@@ -419,7 +424,7 @@ def grounded_answer(q: str) -> str:
         return (f"I found evidence mainly for **{maj}**, but you seem to be asking about **{signals['crop']}**. "
                 f"Do you want info on {signals['crop']} or {maj}?")
 
-    prompt = build_prompt(evidence, q)
+    prompt = build_prompt(evidence, q, signals)
     try:
         resp = gemini.models.generate_content(model=GEMINI_MODEL, contents=prompt)
         text = (resp.text or "").strip()
