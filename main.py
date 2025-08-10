@@ -1,59 +1,51 @@
 # agent.py
 # -----------------------------------------------------------------------------
 # Agri Advisor – Hybrid RAG with grounded answers
-# - Hybrid retrieval: BM25 + dense (SentenceTransformers) + RRF + CrossEncoder re-rank
+# - Hybrid retrieval: (optional) BM25 + dense (SentenceTransformers) + RRF + CrossEncoder re-rank
 # - Metadata filters: state + month (+year) + metric prefilter
 # - Evidence table: LLM answers constrained to retrieved snippets, with inline sources
 # - Clarification: asks ONE follow-up if critical info is missing
 # - CLI loop for quick testing
 #
-# Setup
-#   pip install -U sentence-transformers rank-bm25 faiss-cpu google-genai python-dotenv
-#   # (If faiss-cpu fails on Windows: pip install faiss-cpu==1.7.4)
-#
-# Env
-#   echo "GEMINI_API_KEY=YOUR_KEY" > .env
-#
-# Data folder & schema (one JSON per line)
-#   {
-#     "text": "State: West Bengal. Year: 2022. Month: May. Crop: rice. Wholesale Price: ₹3000/qtl. Temperature: 0.4 °C. Rainfall: 327.5 mm.",
-#     "source": "Wholesale.xlsx[sheet=Sheet1]#STATE=West Bengal/row1012",
-#     "state": "west bengal",
-#     "crop": "rice",
-#     "year": 2022,
-#     "months": ["May"],
-#     "metric": "price_weather"  # optional but recommended: rainfall|price|price_weather|pop|policy|finance|news
-#   }
+# One-time: build the index with index_builder.py (creates ./artifacts/index_flatip.faiss + corpus.jsonl)
 # -----------------------------------------------------------------------------
 
 import os
 import re
 import json
 import time
+from typing import List, Dict, Any, Tuple
+
 import numpy as np
 import faiss
-from typing import List, Dict, Any, Tuple
-from glob import glob
+import torch
 
 from dotenv import load_dotenv
 from sentence_transformers import SentenceTransformer, CrossEncoder
 from rank_bm25 import BM25Okapi
 from google import genai  # google-genai SDK
 
-# ---------- Data location ----------
-DATA_DIR = "./data"
-# load ALL jsonl shards (e.g., data_v4__*.jsonl, data_v5__*.jsonl, etc.)
-DATA_GLOBS = ["*.jsonl"]
-
 # ---------- Config ----------
 EMB_MODEL = "all-MiniLM-L6-v2"
 RERANK_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 GEMINI_MODEL = "gemini-2.5-flash-lite"
-MAX_CTX_SNIPPETS = 6        # how many evidence snippets to send to the LLM
-EVIDENCE_MIN = 2            # require at least this many for a grounded answer
-RRF_K = 60                  # RRF constant
-TOP_K_FUSION = 50           # candidates from fusion to send to reranker
-RERANK_KEEP = 12            # keep these many final candidates as evidence pool
+
+MAX_CTX_SNIPPETS = 6
+EVIDENCE_MIN = 2
+RRF_K = 60
+TOP_K_FUSION = 50
+RERANK_KEEP = 12
+
+# Optional Python BM25 (slow for ~850k docs). Keep OFF unless needed.
+USE_PY_BM25 = True
+
+# ---------- Artifacts ----------
+ART_DIR = "./artifacts"
+CORPUS_PATH = os.path.join(ART_DIR, "corpus.jsonl")
+INDEX_PATH = os.path.join(ART_DIR, "index_flatip.faiss")
+
+# ---------- Device ----------
+DEVICE = "mps" if torch.backends.mps.is_available() else "cpu"
 
 # ---------- Env & Gemini ----------
 load_dotenv()
@@ -63,6 +55,12 @@ if not GEMINI_API_KEY:
 gemini = genai.Client(api_key=GEMINI_API_KEY)
 
 # ---------- Utilities ----------
+def _norm(s: str) -> str:
+    return re.sub(r"[^a-z0-9\s]", " ", s.lower())
+
+def _has_phrase(haystack: str, phrase: str) -> bool:
+    return re.search(rf"\b{re.escape(phrase)}\b", haystack) is not None
+
 MONTHS_MAP = {
     "january":"Jan","jan":"Jan",
     "february":"Feb","feb":"Feb",
@@ -88,6 +86,17 @@ INDIA_STATES = {
     "lakshadweep","daman and diu","dadra and nagar haveli"
 }
 
+STATE_SYNONYMS = {
+    "bengal": "west bengal",
+    "orissa": "odisha",
+    "up": "uttar pradesh",
+    "mp": "madhya pradesh",
+    "tn": "tamil nadu",
+    "ap": "andhra pradesh",
+    "hp": "himachal pradesh",
+    "jk": "jammu and kashmir",
+}
+
 # crop synonyms to improve matching/intent
 CROP_SYNONYMS = {
     "sorghum": ["jowar"],
@@ -98,19 +107,65 @@ CROP_SYNONYMS = {
     "sesame": ["til"],
     "cotton": ["kapas"],
     "maize": ["corn"],
+    # local names
+    "potato": ["aloo", "batata"],
+    "onion": ["pyaz", "kanda"],
+    "carrot": ["gajar"],
 }
-
-# --- Known crops from data (built after docs load, but declare here) ---
-KNOWN_CROPS: set[str] = set()
 
 # --- Session memory for slot filling across turns ---
 _LAST_SIGNALS: Dict[str, Any] | None = None
 
-def _norm(s: str) -> str:
-    return re.sub(r"[^a-z0-9\s]", " ", s.lower())
+def find_month(q: str) -> str | None:
+    ql = q.lower()
+    month_names = "january|february|march|april|may|june|july|august|september|october|november|december"
+    m = re.search(rf"\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|{month_names})\b", ql)
+    return MONTHS_MAP[m.group(0)] if m else None
 
-def _has_phrase(haystack: str, phrase: str) -> bool:
-    return re.search(rf"\b{re.escape(phrase)}\b", haystack) is not None
+def find_year(q: str) -> int | None:
+    m = re.search(r"\b(19|20)\d{2}\b", q)
+    return int(m.group(0)) if m else None
+
+def detect_intent(q: str) -> str:
+    ql = q.lower()
+    if any(w in ql for w in ["when should i plant", "when to plant", "sowing time", "sow window", "plant in", "should i grow", "should i put"]):
+        return "sowing_window"
+    if any(w in ql for w in ["variety", "seed variety", "hybrid", "cv"]):
+        return "variety"
+    if any(w in ql for w in ["rain", "rainfall", "monsoon", "imd", "departure"]):
+        return "rainfall"
+    if any(w in ql for w in ["price", "mandi", "sell", "market", "wholesale"]):
+        return "market"
+    if any(w in ql for w in ["fertilizer", "dose", "seed rate", "irrigat"]):
+        return "pop_practice"
+    if any(w in ql for w in ["yield", "production", "area", "acreage", "fertilizer", "pesticide"]):
+        return "stats"
+    if any(w in ql for w in ["which crop", "what crop", "suitable crop", "recommend crop", "npk", "nitrogen", "phosphorus", "potash", "ph ", " pH", "temperature", "humidity", "rainfall"]):
+        return "crop_env"
+    if any(w in ql for w in ["scheme", "yojana", "subsidy", "grant", "benefit", "eligibility", "apply", "application", "documents", "loan", "credit", "pension", "stipend", "scholarship", "assistance"]):
+        return "scheme"
+    return "general"
+
+# These reference globals filled after meta is built; fine because they run at query-time.
+KNOWN_CROPS: set = set()
+KNOWN_DISTRICTS: set = set()
+
+def find_state(q: str) -> str | None:
+    qn = _norm(q)
+    for k, v in STATE_SYNONYMS.items():
+        if _has_phrase(qn, k):
+            return v
+    for s in INDIA_STATES:
+        if _has_phrase(qn, s):
+            return s
+    return None
+
+def find_district(q: str) -> str | None:
+    qn = _norm(q)
+    for d in KNOWN_DISTRICTS:
+        if d and _has_phrase(qn, d):
+            return d
+    return None
 
 def find_crop(q: str) -> str | None:
     qn = _norm(q)
@@ -130,7 +185,6 @@ def find_crop(q: str) -> str | None:
                 return canon
     return None
 
-
 def expand_with_synonyms(q: str) -> str:
     ql = q.lower()
     extra = []
@@ -142,99 +196,17 @@ def expand_with_synonyms(q: str) -> str:
             extra.extend([s for s in syns if s not in ql])
     return q if not extra else f"{q} ({', '.join(set(extra))})"
 
-def find_state(q: str) -> str | None:
-    ql = q.lower()
-    for s in INDIA_STATES:
-        if s in ql:
-            return s
-    return None
-
-def find_month(q: str) -> str | None:
-    ql = q.lower()
-    month_names = "january|february|march|april|may|june|july|august|september|october|november|december"
-    m = re.search(rf"\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|{month_names})\b", ql)
-    return MONTHS_MAP[m.group(0)] if m else None
-
-def find_year(q: str) -> int | None:
-    m = re.search(r"\b(19|20)\d{2}\b", q)
-    return int(m.group(0)) if m else None
-
-def detect_intent(q: str) -> str:
-    ql = q.lower()
-    if any(w in ql for w in ["when should i plant", "when to plant", "sowing time", "sow window", "plant in"]):
-        return "sowing_window"
-    if any(w in ql for w in ["variety", "seed variety", "hybrid", "cv"]):
-        return "variety"
-    if any(w in ql for w in ["rain", "rainfall", "monsoon", "imd", "departure"]):
-        return "rainfall"
-    if any(w in ql for w in ["price", "mandi", "sell", "market", "wholesale"]):
-        return "market"
-    if any(w in ql for w in ["fertilizer", "dose", "seed rate", "irrigat"]):
-        return "pop_practice"
-    if any(w in ql for w in ["yield", "production", "area", "acreage", "fertilizer", "pesticide"]):
-        return "stats"
-    if any(w in ql for w in ["which crop", "what crop", "suitable crop", "recommend crop", "npk", "nitrogen", "phosphorus", "potash", "ph ", " pH", "temperature", "humidity", "rainfall"]):
-        return "crop_env"
-    if any(w in ql for w in [
-        "scheme", "yojana", "subsidy", "grant", "benefit", "eligibility",
-        "apply", "application", "documents", "loan", "credit", "pension",
-        "stipend", "scholarship", "assistance"
-    ]):
-        return "scheme"
-    if any(w in ql for w in ["price", "mandi", "sell", "market"]):
-        return "market"
-    return "general"
-
-def find_year(q: str) -> int | None:
-    m = re.search(r"\b(19|20)\d{2}\b", q)
-    return int(m.group(0)) if m else None
-
-# globals
-KNOWN_DISTRICTS: set[str] = set()
-STATE_SYNONYMS = {
-    "bengal": "west bengal",
-    "orissa": "odisha",
-    "up": "uttar pradesh",
-    "mp": "madhya pradesh",
-    "tn": "tamil nadu",
-    "ap": "andhra pradesh",
-    "hp": "himachal pradesh",
-    "jk": "jammu and kashmir",
-}
-
-# after building meta:
-KNOWN_DISTRICTS.update({m["district"] for m in meta if m.get("district")})
-
-def find_state(q: str) -> str | None:
-    qn = _norm(q)
-    for k, v in STATE_SYNONYMS.items():
-        if _has_phrase(qn, k):
-            return v
-    for s in INDIA_STATES:
-        if _has_phrase(qn, s):
-            return s
-    return None
-
-def find_district(q: str) -> str | None:
-    qn = _norm(q)
-    for d in KNOWN_DISTRICTS:
-        if d and _has_phrase(qn, d):
-            return d
-    return None
-
-# and include it in parse_query():
 def parse_query(q: str) -> Dict[str, Any]:
     q_exp = expand_with_synonyms(q)
     return {
         "intent": detect_intent(q_exp),
         "state": find_state(q_exp),
-        "district": find_district(q_exp),     # <— add this
+        "district": find_district(q_exp),
         "month": find_month(q_exp),
         "year": find_year(q_exp),
         "crop": find_crop(q_exp),
         "raw": q_exp,
     }
-
 
 def _merge_signals(prev: Dict[str,Any] | None, new: Dict[str,Any]) -> Dict[str,Any]:
     if not prev:
@@ -249,47 +221,30 @@ def merged_parse_query(q: str) -> Dict[str, Any]:
     global _LAST_SIGNALS
     fresh = parse_query(q)
     cur = _merge_signals(_LAST_SIGNALS, fresh)
-
     # if user asked a market/price question without naming a crop, don't reuse old crop
     if fresh.get("intent") == "market" and not fresh.get("crop"):
         cur["crop"] = None
-
     _LAST_SIGNALS = cur.copy()
     return cur
 
-CROP_SYNONYMS.update({
-    "potato": ["aloo", "batata"],
-    "onion": ["pyaz", "kanda"],
-    "carrot": ["gajar"],
-})
-
-# ---------- Load docs ----------
+# ---------- Load docs from merged corpus ----------
 docs: List[Dict[str, Any]] = []
-files: List[str] = []
-for pat in DATA_GLOBS:
-    files.extend(sorted(glob(os.path.join(DATA_DIR, pat))))
-if not files:
-    raise RuntimeError(f"No JSONL files found in {DATA_DIR} (patterns: {DATA_GLOBS})")
+if not os.path.exists(CORPUS_PATH):
+    raise RuntimeError(f"Missing {CORPUS_PATH}. Run index_builder.py first.")
 
-for path in files:
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    docs.append(json.loads(line))
-                except json.JSONDecodeError:
-                    continue
-    except FileNotFoundError:
-        pass
+with open(CORPUS_PATH, "r", encoding="utf-8") as f:
+    for line in f:
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            docs.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
 
-if not docs:
-    raise RuntimeError("No documents loaded. Put your .jsonl chunks in ./data/")
-print(f"Loaded {len(docs)} documents from {len(files)} files.")
+print(f"Loaded {len(docs)} documents from merged corpus.")
 
-# ---------- Build corpus arrays ----------
+# Helper arrays
 texts = [d.get("text", "") for d in docs]
 meta = [{
     "source": d.get("source", "unknown"),
@@ -301,24 +256,37 @@ meta = [{
                else ([d.get("months")] if d.get("months") else None)),
 } for d in docs]
 
-# Collect crops present in data (lowercased)
-KNOWN_CROPS.update({m["crop"] for m in meta if m.get("crop")})
+# Fill globals for detectors
+KNOWN_CROPS = {m["crop"] for m in meta if m.get("crop")}
+KNOWN_DISTRICTS = {m["district"] for m in meta if m.get("district")}
 
-# ---------- Build indices ----------
-print("Building embeddings…")
-embedder = SentenceTransformer(EMB_MODEL)
-emb = embedder.encode(texts, normalize_embeddings=True, convert_to_numpy=True, show_progress_bar=True)
-dim = emb.shape[1]
+# ---------- Optional BM25 ----------
+if USE_PY_BM25:
+    print("Building BM25… (slow on big corpora)")
+    tokenized_corpus = [t.split() for t in texts]
+    bm25 = BM25Okapi(tokenized_corpus)
+else:
+    bm25 = None
 
-index = faiss.IndexFlatIP(dim)
-index.add(emb.astype("float32"))
+# ---------- Embedding (query only) + FAISS index ----------
+print("Loading embedder (for query vectors only)…")
+embedder = SentenceTransformer(EMB_MODEL, device=DEVICE)
+embedder.max_seq_length = 128  # short for speed; queries are short
 
-print("Building BM25…")
-tokenized_corpus = [t.split() for t in texts]
-bm25 = BM25Okapi(tokenized_corpus)
+print("Reading FAISS index…")
+if not os.path.exists(INDEX_PATH):
+    raise RuntimeError(f"Missing {INDEX_PATH}. Run index_builder.py first.")
+index = faiss.read_index(INDEX_PATH)
+dim = index.d
 
-print("Loading cross-encoder…")
-reranker = CrossEncoder(RERANK_MODEL)
+# Lazy-load reranker to avoid NameError and heavy startup
+_reranker = None
+def _get_reranker():
+    global _reranker
+    if _reranker is None:
+        print("Loading cross-encoder…")
+        _reranker = CrossEncoder(RERANK_MODEL, device=DEVICE)
+    return _reranker
 
 # ---------- Retrieval ----------
 def rrf_fuse(bm_ranked: List[int], dense_ranked: List[int], k: int = RRF_K) -> List[int]:
@@ -340,20 +308,19 @@ def filter_pool(signals: Dict[str, Any]) -> List[int]:
     # Intent → metric prefilter (soft)
     intent = signals.get("intent")
     if intent == "rainfall":
-        rain_pool = [i for i in pool if docs[i].get("metric") == "rainfall"]
-        pool = rain_pool or pool
+        pool2 = [i for i in pool if docs[i].get("metric") == "rainfall"]
+        pool = pool2 or pool
     elif intent == "pop_practice":
-        pop_pool = [i for i in pool if docs[i].get("metric") == "pop"]
-        pool = pop_pool or pool
+        pool2 = [i for i in pool if docs[i].get("metric") == "pop"]
+        pool = pool2 or pool
     elif intent == "stats":
-        stats_pool = [i for i in pool if docs[i].get("metric") == "crop_stats"]
-        pool = stats_pool or pool
+        pool2 = [i for i in pool if docs[i].get("metric") == "crop_stats"]
+        pool = pool2 or pool
     elif intent == "crop_env":
-        env_pool = [i for i in pool if docs[i].get("metric") == "crop_env"]
-        pool = env_pool or pool
+        pool2 = [i for i in pool if docs[i].get("metric") == "crop_env"]
+        pool = pool2 or pool
     elif intent == "scheme":
         pool2 = [i for i in pool if docs[i].get("metric") == "scheme"]
-        # optional: filter by 'level' if user asked "central" or "state"
         ql = signals["raw"].lower()
         if "central" in ql:
             pool2 = [i for i in pool2 if (docs[i].get("level") == "central")]
@@ -372,7 +339,6 @@ def filter_pool(signals: Dict[str, Any]) -> List[int]:
             y = signals["year"]
             pool2 = [i for i in pool2 if docs[i].get("year") == y]
         pool = pool2 or pool
-
 
     # Year preference (soft)
     if signals.get("year") is not None:
@@ -410,12 +376,16 @@ def hybrid_search(q: str, k_fusion: int = TOP_K_FUSION, k_rerank: int = RERANK_K
     if not pool:
         pool = list(range(len(docs)))
 
-    # BM25 over full then select pool by top scores
-    bm_scores = bm25.get_scores(q.split())
-    bm_pairs = [(i, bm_scores[i]) for i in pool]
-    bm_ranked = [i for i, _ in sorted(bm_pairs, key=lambda x: x[1], reverse=True)[:k_fusion]]
+    # BM25 over full then select pool by top scores (optional)
+    if USE_PY_BM25 and bm25 is not None:
+        tokens = q.split()
+        bm_scores = bm25.get_scores(tokens)
+        bm_pairs = [(i, bm_scores[i]) for i in pool]
+        bm_ranked = [i for i, _ in sorted(bm_pairs, key=lambda x: x[1], reverse=True)[:k_fusion]]
+    else:
+        bm_ranked = []
 
-    # Dense over full then filter to pool
+    # Dense over FAISS then filter to pool
     qv = embedder.encode([q], normalize_embeddings=True, convert_to_numpy=True)
     _, I = index.search(qv.astype("float32"), min(k_fusion*2, len(docs)))
     dense_filtered = [i for i in I[0] if i in pool][:k_fusion]
@@ -428,7 +398,7 @@ def hybrid_search(q: str, k_fusion: int = TOP_K_FUSION, k_rerank: int = RERANK_K
     pairs = [[q, texts[i]] for i in fused]
     if not pairs:
         return signals, []
-    rr_scores = reranker.predict(pairs)
+    rr_scores = _get_reranker().predict(pairs)
     reranked = [i for i, _ in sorted(zip(fused, rr_scores), key=lambda x: x[1], reverse=True)]
     return signals, reranked[:k_rerank]
 
