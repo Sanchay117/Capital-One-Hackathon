@@ -176,6 +176,8 @@ def detect_intent(q: str) -> str:
         "stipend", "scholarship", "assistance"
     ]):
         return "scheme"
+    if any(w in ql for w in ["price", "mandi", "sell", "market"]):
+        return "market"
     return "general"
 
 def find_year(q: str) -> int | None:
@@ -309,6 +311,16 @@ def filter_pool(signals: Dict[str, Any]) -> List[int]:
             pool2 = [i for i in pool2 if (docs[i].get("level") == "central")]
         if "state" in ql and signals["state"]:
             pool2 = [i for i in pool2 if (docs[i].get("level") == "state" and (docs[i].get("state") == signals["state"]))]
+        pool = pool2 or pool
+    elif intent == "market":
+        pool2 = [i for i in pool if docs[i].get("metric") in {"market_price", "price", "price_weather"}]
+        # tighten by district/year if the user said them
+        if signals.get("district"):
+            d = signals["district"]
+            pool2 = [i for i in pool2 if (meta[i]["district"] == d)]
+        if signals.get("year"):
+            y = signals["year"]
+            pool2 = [i for i in pool2 if (docs[i].get("year") == y)]
         pool = pool2 or pool
 
     # Year preference (soft)
