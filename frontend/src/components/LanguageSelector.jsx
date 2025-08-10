@@ -10,7 +10,11 @@ const languages = {
     bn: "বাংলা (Bengali)",
     gu: "ગુજરાતી (Gujarati)",
     kn: "ಕನ್ನಡ (Kannada)",
-    pa: "ਪੰਜਾਬੀ (Punjabi)"
+    pa: "ਪੰਜਾਬੀ (Punjabi)",
+    // NEW LANGUAGES ADDED
+    ur: "اردو (Urdu)",
+    ml: "മലയാളം (Malayalam)",
+    or: "ଓଡ଼ିଆ (Odia)"
 };
 
 const LanguageSelector = ({ setGlobalLanguage }) => {
@@ -39,13 +43,11 @@ const LanguageSelector = ({ setGlobalLanguage }) => {
 
     return (
         <div className="language-selector" ref={wrapperRef}>
-            {/* The display button now uses flexbox for better alignment */}
             <button className="language-display" onClick={() => setIsOpen(!isOpen)}>
                 <span className="language-name">{languages[selectedLanguage]}</span>
                 <span className="language-arrow">▼</span>
             </button>
 
-            {/* The dropdown menu, which appears only when 'isOpen' is true */}
             {isOpen && (
                 <ul className="language-dropdown">
                     {Object.entries(languages).map(([key, name]) => (

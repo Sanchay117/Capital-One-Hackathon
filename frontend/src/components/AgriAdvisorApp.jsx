@@ -9,7 +9,7 @@ import { translations } from '../translations';
 import { FiMenu } from 'react-icons/fi';
 
 function AgriAdvisorApp() {
-    // --- STATE MANAGEMENT (Unchanged) ---
+    // --- STATE MANAGEMENT ---
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const profileMenuRef = useRef(null);
@@ -19,6 +19,7 @@ function AgriAdvisorApp() {
     const [isChatActive, setIsChatActive] = useState(false);
     const [globalLanguage, setGlobalLanguage] = useState('en');
     const [isRecording, setIsRecording] = useState(false);
+    const [isTranscribing, setIsTranscribing] = useState(false); // This state is now used
     const mediaRecorder = useRef(null);
     const audioChunks = useRef([]);
 
@@ -69,43 +70,51 @@ function AgriAdvisorApp() {
         setInput('');
     };
     
-    // --- THE FIX: Re-implementing the Audio Recording Functionality ---
-
+    // --- AUDIO RECORDING & TRANSCRIPTION IMPLEMENTATION ---
     const startRecording = () => {
         navigator.mediaDevices.getUserMedia({ audio: true })
             .then(stream => {
                 const recorder = new MediaRecorder(stream);
                 mediaRecorder.current = recorder;
-                audioChunks.current = []; // Clear previous recording chunks
+                audioChunks.current = [];
+                recorder.start();
+                setIsRecording(true);
+                recorder.onstop = () => {
+                    setIsTranscribing(true);
+                    const audioBlob = new Blob(audioChunks.current, { type: 'audio/webm' });
+                    const formData = new FormData();
+                    formData.append('audio', audioBlob);
 
+                    fetch('/api/transcribe', {
+                        method: 'POST',
+                        body: formData,
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        setInput(data.text);
+                    })
+                    .catch(err => {
+                        console.error("Error during transcription:", err);
+                        setInput("Sorry, I couldn't understand that. Please try again.");
+                    })
+                    .finally(() => {
+                        setIsTranscribing(false);
+                    });
+                    
+                    stream.getTracks().forEach(track => track.stop());
+                };
                 recorder.ondataavailable = event => {
                     audioChunks.current.push(event.data);
                 };
-
-                recorder.onstop = () => {
-                    const audioBlob = new Blob(audioChunks.current, { type: 'audio/webm' });
-                    const languageCode = translations[globalLanguage].languageCode;
-                    
-                    // --- This is the STATIC implementation ---
-                    // It simulates the process without a real backend.
-                    console.log(`Simulating transcription for audio blob in language: ${languageCode}`);
-                    // In a real app, you would send the audioBlob and languageCode to a server here.
-                    
-                    setTimeout(() => {
-                        // After a delay, set the input to the "couldn't understand" message.
-                        setInput("Sorry, I couldn't understand that.");
-                    }, 1500); // Simulate a 1.5-second processing delay.
-                    
-                    // Clean up the stream tracks to turn off the microphone indicator
-                    stream.getTracks().forEach(track => track.stop());
-                };
-
-                recorder.start();
-                setIsRecording(true);
             })
             .catch(err => {
                 console.error("Error accessing microphone:", err);
-                alert("Microphone access was denied. Please allow microphone access in your browser settings to use this feature.");
+                alert("Microphone access was denied. Please allow microphone access in your browser settings.");
             });
     };
 
@@ -124,11 +133,9 @@ function AgriAdvisorApp() {
         }
     };
 
-    // --- End of Audio Functionality ---
-
     const currentTranslation = translations[globalLanguage];
 
-    // --- RENDER LOGIC (Unchanged) ---
+    // --- RENDER LOGIC ---
     const renderLandingPage = () => (
         <div className="app-container chat-inactive">
             <main className="main-content">
@@ -147,6 +154,7 @@ function AgriAdvisorApp() {
                         toggleKeyboard={() => setShowKeyboard(!showKeyboard)}
                         placeholderText={currentTranslation.placeholder}
                         isRecording={isRecording}
+                        isTranscribing={isTranscribing} // <-- 1. ADD THIS LINE
                         handleAudioClick={handleAudioClick}
                     />
                 </div>
@@ -174,6 +182,7 @@ function AgriAdvisorApp() {
                         toggleKeyboard={() => setShowKeyboard(!showKeyboard)}
                         placeholderText={currentTranslation.placeholder}
                         isRecording={isRecording}
+                        isTranscribing={isTranscribing} // <-- 2. ADD THIS LINE
                         handleAudioClick={handleAudioClick}
                     />
                 </div>

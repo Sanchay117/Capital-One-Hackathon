@@ -64,6 +64,28 @@ const keyboards = {
     ['ਓ', 'ਏ', '੍', 'ਿ', 'ੁ', 'ਪ', 'ਰ', 'ਕ', 'ਤ', 'ਚ', 'ਟ', 'ਸ਼'],
     ['ਂ', 'ਮ', 'ਨ', 'ਵ', 'ਲ', 'ਸ', ',', '.', 'ਯ', 'ਖ'],
     [' ' , 'Backspace', 'Enter']
+  ],
+  // NEW LANGUAGES ADDED
+  ur: [
+    ['`', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '='],
+    ['ق', 'و', 'ر', 'ت', 'ے', 'ء', 'ی', 'ہ', 'پ', ']', '[', '\\'],
+    ['ا', 'س', 'د', 'ف', 'گ', 'ح', 'ج', 'ک', 'ل', ';', 'ط'],
+    ['ژ', 'ش', 'چ', 'ڤ', 'ب', 'ن', 'م', '،', '۔', 'ض'],
+    [' ' , 'Backspace', 'Enter']
+  ],
+  ml: [
+    ['~', '൧', '൨', '൩', '൪', '൫', '൬', '൭', '൮', '൯', '൦', '-', 'ഋ'],
+    ['ൌ', 'ൈ', 'ാ', 'ീ', 'ൂ', 'ബ', 'ഹ', 'ഗ', 'ദ', 'ജ', 'ഡ', 'ഞ', 'ത്ര'],
+    ['ോ', 'േ', '്', 'ി', 'ു', 'പ', 'ര', 'ക', 'ത', 'ച', 'ട', 'ഷ'],
+    ['ം', 'മ', 'ന', 'വ', 'ല', 'സ', ',', '.', 'യ', 'ശ'],
+    [' ' , 'Backspace', 'Enter']
+  ],
+  or: [
+    ['~', '୧', '୨', '୩', '୪', '୫', '୬', '୭', '୮', '୯', '୦', '-', 'ଋ'],
+    ['ୌ', 'ୈ', 'ା', 'ୀ', 'ୂ', 'ବ', 'ହ', 'ଗ', 'ଦ', 'ଜ', 'ଡ', 'ଞ', 'ତ୍ର'],
+    ['ୋ', 'େ', '୍', 'ି', 'ୁ', 'ପ', 'ର', 'କ', 'ତ', 'ଚ', 'ଟ', 'ଷ'],
+    ['ଂ', 'ମ', 'ନ', 'ବ', 'ଲ', 'ସ', ',', '.', 'ୟ', 'ଶ'],
+    [' ' , 'Backspace', 'Enter']
   ]
 };
 
@@ -89,6 +111,10 @@ const OnScreenKeyboard = ({ onKeyPress }) => {
         <button onClick={() => setLanguage('gu')} className={language === 'gu' ? 'active' : ''}>ગુજરાતી</button>
         <button onClick={() => setLanguage('kn')} className={language === 'kn' ? 'active' : ''}>ಕನ್ನಡ</button>
         <button onClick={() => setLanguage('pa')} className={language === 'pa' ? 'active' : ''}>ਪੰਜਾਬੀ</button>
+        {/* NEW BUTTONS ADDED */}
+        <button onClick={() => setLanguage('ur')} className={language === 'ur' ? 'active' : ''}>اردو</button>
+        <button onClick={() => setLanguage('ml')} className={language === 'ml' ? 'active' : ''}>മലയാളം</button>
+        <button onClick={() => setLanguage('or')} className={language === 'or' ? 'active' : ''}>ଓଡ଼ିଆ</button>
       </div>
       <div className="keyboard-layout">
         {keyboards[language].map((row, i) => (
