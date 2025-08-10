@@ -1,4 +1,5 @@
 models/
+artifacts/
 .env
 
 # Python virtual environments
