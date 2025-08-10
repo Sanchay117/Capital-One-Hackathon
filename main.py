@@ -168,6 +168,8 @@ def detect_intent(q: str) -> str:
         return "pop_practice"
     if any(w in ql for w in ["yield", "production", "area", "acreage", "fertilizer", "pesticide"]):
         return "stats"
+    if any(w in ql for w in ["which crop", "what crop", "suitable crop", "recommend crop", "npk", "nitrogen", "phosphorus", "potash", "ph ", " pH", "temperature", "humidity", "rainfall"]):
+        return "crop_env"
     return "general"
 
 def find_year(q: str) -> int | None:
@@ -290,6 +292,9 @@ def filter_pool(signals: Dict[str, Any]) -> List[int]:
     elif intent == "stats":
         stats_pool = [i for i in pool if docs[i].get("metric") == "crop_stats"]
         pool = stats_pool or pool
+    elif intent == "crop_env":
+        env_pool = [i for i in pool if docs[i].get("metric") == "crop_env"]
+        pool = env_pool or pool
 
     # Year preference (soft)
     if signals.get("year") is not None:

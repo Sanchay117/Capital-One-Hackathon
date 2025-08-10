@@ -5,6 +5,7 @@
 -   [Wholesale Crop Price Dataset (2022–2023)](https://www.kaggle.com/datasets/shraddhadeshmukh21/wholesale-crop-price-dataset-20222023)
 -   [Monsoon Rainfall Trends – NW India (1901–2015)](https://www.kaggle.com/datasets/hmnshudhmn24/monsoon-rainfall-trends-nw-india-19012015)
 -   [Hyperparameter-Tuned Crop Yield ML Dataset](https://www.kaggle.com/datasets/aaryanmavaninew/hyperparameter-tuned-crop-yield-ml-dataset)
+-   [Crop Production Data ( Raw + Refined)](https://www.kaggle.com/datasets/kunshbhatia/crop-production-data-raw-refined)
 
 ### Websites Scraped
 
