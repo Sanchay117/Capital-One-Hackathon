@@ -106,23 +106,28 @@ KNOWN_CROPS: set[str] = set()
 # --- Session memory for slot filling across turns ---
 _LAST_SIGNALS: Dict[str, Any] | None = None
 
+def _norm(s: str) -> str:
+    return re.sub(r"[^a-z0-9\s]", " ", s.lower())
+
+def _has_phrase(haystack: str, phrase: str) -> bool:
+    return re.search(rf"\b{re.escape(phrase)}\b", haystack) is not None
+
 def find_crop(q: str) -> str | None:
-    ql = q.lower()
-    # direct hit on known crops first
-    for c in KNOWN_CROPS:
-        if c and c in ql:
+    qn = _norm(q)
+
+    # try known crops (multi-word first)
+    known = sorted(list(KNOWN_CROPS), key=len, reverse=True)
+    for c in known:
+        if c and _has_phrase(qn, c):
             return c
-    # synonyms → canonical crop
+
+    # synonyms → canonical
     for canon, syns in CROP_SYNONYMS.items():
-        if canon in ql:
+        if _has_phrase(qn, canon):
             return canon
         for s in syns:
-            if s in ql:
+            if _has_phrase(qn, s):
                 return canon
-    # common crops fallback
-    for c in ["wheat","rice","maize","cotton","turmeric","sesame","pigeonpea","chickpea","mustard","jowar","bajra","moong","urad"]:
-        if c in ql:
-            return c
     return None
 
 
@@ -184,16 +189,52 @@ def find_year(q: str) -> int | None:
     m = re.search(r"\b(19|20)\d{2}\b", q)
     return int(m.group(0)) if m else None
 
+# globals
+KNOWN_DISTRICTS: set[str] = set()
+STATE_SYNONYMS = {
+    "bengal": "west bengal",
+    "orissa": "odisha",
+    "up": "uttar pradesh",
+    "mp": "madhya pradesh",
+    "tn": "tamil nadu",
+    "ap": "andhra pradesh",
+    "hp": "himachal pradesh",
+    "jk": "jammu and kashmir",
+}
+
+# after building meta:
+KNOWN_DISTRICTS.update({m["district"] for m in meta if m.get("district")})
+
+def find_state(q: str) -> str | None:
+    qn = _norm(q)
+    for k, v in STATE_SYNONYMS.items():
+        if _has_phrase(qn, k):
+            return v
+    for s in INDIA_STATES:
+        if _has_phrase(qn, s):
+            return s
+    return None
+
+def find_district(q: str) -> str | None:
+    qn = _norm(q)
+    for d in KNOWN_DISTRICTS:
+        if d and _has_phrase(qn, d):
+            return d
+    return None
+
+# and include it in parse_query():
 def parse_query(q: str) -> Dict[str, Any]:
     q_exp = expand_with_synonyms(q)
     return {
         "intent": detect_intent(q_exp),
         "state": find_state(q_exp),
+        "district": find_district(q_exp),     # <— add this
         "month": find_month(q_exp),
         "year": find_year(q_exp),
         "crop": find_crop(q_exp),
         "raw": q_exp,
     }
+
 
 def _merge_signals(prev: Dict[str,Any] | None, new: Dict[str,Any]) -> Dict[str,Any]:
     if not prev:
@@ -206,11 +247,21 @@ def _merge_signals(prev: Dict[str,Any] | None, new: Dict[str,Any]) -> Dict[str,A
 
 def merged_parse_query(q: str) -> Dict[str, Any]:
     global _LAST_SIGNALS
-    cur = parse_query(q)
-    cur = _merge_signals(_LAST_SIGNALS, cur)
+    fresh = parse_query(q)
+    cur = _merge_signals(_LAST_SIGNALS, fresh)
+
+    # if user asked a market/price question without naming a crop, don't reuse old crop
+    if fresh.get("intent") == "market" and not fresh.get("crop"):
+        cur["crop"] = None
+
     _LAST_SIGNALS = cur.copy()
     return cur
 
+CROP_SYNONYMS.update({
+    "potato": ["aloo", "batata"],
+    "onion": ["pyaz", "kanda"],
+    "carrot": ["gajar"],
+})
 
 # ---------- Load docs ----------
 docs: List[Dict[str, Any]] = []
@@ -291,9 +342,6 @@ def filter_pool(signals: Dict[str, Any]) -> List[int]:
     if intent == "rainfall":
         rain_pool = [i for i in pool if docs[i].get("metric") == "rainfall"]
         pool = rain_pool or pool
-    elif intent == "market":
-        price_pool = [i for i in pool if docs[i].get("metric") in ("price", "price_weather")]
-        pool = price_pool or pool
     elif intent == "pop_practice":
         pop_pool = [i for i in pool if docs[i].get("metric") == "pop"]
         pool = pop_pool or pool
@@ -313,15 +361,18 @@ def filter_pool(signals: Dict[str, Any]) -> List[int]:
             pool2 = [i for i in pool2 if (docs[i].get("level") == "state" and (docs[i].get("state") == signals["state"]))]
         pool = pool2 or pool
     elif intent == "market":
-        pool2 = [i for i in pool if docs[i].get("metric") in {"market_price", "price", "price_weather"}]
-        # tighten by district/year if the user said them
+        pool2 = [i for i in pool if docs[i].get("metric") in ("price", "price_weather", "market")]
         if signals.get("district"):
             d = signals["district"]
-            pool2 = [i for i in pool2 if (meta[i]["district"] == d)]
+            pool2 = [i for i in pool2 if meta[i]["district"] == d]
+        if signals.get("state"):
+            s = signals["state"]
+            pool2 = [i for i in pool2 if meta[i]["state"] == s]
         if signals.get("year"):
             y = signals["year"]
-            pool2 = [i for i in pool2 if (docs[i].get("year") == y)]
+            pool2 = [i for i in pool2 if docs[i].get("year") == y]
         pool = pool2 or pool
+
 
     # Year preference (soft)
     if signals.get("year") is not None:
