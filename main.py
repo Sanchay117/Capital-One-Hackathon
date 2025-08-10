@@ -36,7 +36,10 @@ RRF_K = 60
 TOP_K_FUSION = 50
 RERANK_KEEP = 12
 
-RESET_EVERY_QUERY = True
+# ---------- Behavior toggles ----------
+RESET_EVERY_QUERY = True          # ignore previous turns
+ASK_FOR_MISSING_SLOTS = False     # don't ask; answer best-effort instead
+REQUIRE_EVIDENCE_MIN = False      # allow unverified fallback when evidence is thin
 
 # Optional Python BM25 (slow for ~850k docs). Keep OFF unless needed.
 USE_PY_BM25 = True
@@ -227,7 +230,7 @@ def merged_parse_query(q: str) -> Dict[str, Any]:
         _LAST_SIGNALS = fresh.copy()
         return fresh
 
-    # (stateful mode – only used if you flip the flag off)
+    # (stateful mode if you ever flip the flag)
     cur = _merge_signals(_LAST_SIGNALS, fresh)
     if fresh.get("intent") == "market" and not fresh.get("crop"):
         cur["crop"] = None
@@ -480,18 +483,16 @@ def grounded_answer(q: str) -> str:
     signals, idxs = hybrid_search(q)
 
     # Ask for missing critical info for sowing intent
-    if signals["intent"] == "sowing_window" and (signals["state"] is None or signals["month"] is None):
+    if ASK_FOR_MISSING_SLOTS and signals["intent"] == "sowing_window" and (signals["state"] is None or signals["month"] is None):
         missing = []
         if signals["state"] is None: missing.append("state")
         if signals["month"] is None: missing.append("month")
         ask = " and ".join(missing)
-        return f"I need your {ask} to be precise. For example: 'What should I plant in May in Punjab (irrigated or rainfed?)'."
+        return f"I need your {ask} to be precise."
 
     evidence = make_evidence(idxs)
-    if len(evidence) < EVIDENCE_MIN:
-        return ("⚠️ This answer is not grounded in the retrieved data. Please verify independently.\n"
-                "I need your district and whether you are irrigated/rainfed to answer precisely. "
-                "Try: 'What should I plant in May in Punjab, irrigated, for fodder?'")
+    if REQUIRE_EVIDENCE_MIN and len(evidence) < EVIDENCE_MIN:
+        return "No matching sources retrieved in corpus."
 
     def _majority_crop(idxs: List[int]) -> str | None:
         counts = {}
