@@ -1,160 +1,119 @@
-import csv
-import json
-import os
-import re
-from collections import defaultdict
+#!/usr/bin/env python3
+import csv, json, os, re
+from typing import Optional, Dict, List
 
-# --- Configure fields to include (label, CSV column key) ---
-FIELDS = [
-    ("Crop", "CROPS"),
-    ("Type Of Crop", "TYPE_OF_CROP"),
-    ("Soil", "SOIL"),
-    ("Season", "SEASON"),
-    ("Sown in", "SOWN"),
-    ("Harvested in", "HARVESTED"),
-    ("Water Source", "WATER_SOURCE"),
-    ("Soil pH", "SOIL_PH"),
-    ("Soil pH high", "SOIL_PH_HIGH"),
-    ("Crop Duration", "CROPDURATION"),
-    ("Crop Duration Max", "CROPDURATION_MAX"),
-    ("Temperature", "TEMP"),
-    ("Max Temperature", "MAX_TEMP"),
-    ("Required Water", "WATERREQUIRED"),
-    ("Required Water (MAX)", "WATERREQUIRED_MAX"),
-    ("Relative Humidity", "RELATIVE_HUMIDITY"),
-    ("Relative Humidity (MAX)", "RELATIVE_HUMIDITY_MAX"),
-]
-
-# --- Units to append for numeric values (tweak if your CSV uses different units) ---
-UNITS = {
-    "TEMP": "°C",
-    "MAX_TEMP": "°C",
-    "WATERREQUIRED": "mm",
-    "WATERREQUIRED_MAX": "mm",
-    "RELATIVE_HUMIDITY": "%",
-    "RELATIVE_HUMIDITY_MAX": "%",
-    "CROPDURATION": "days",
-    "CROPDURATION_MAX": "days",
-    # pH is unitless; SOWN/HARVESTED are months/strings so no unit.
+# Map messy headers → canonical month tokens and labels
+MONTH_KEY = {
+    "JUN": "Jun",
+    "JUL": "Jul",
+    "AUG": "Aug",
+    "SEP": "Sep",
+    "SEPT": "Sep",         # some sheets use SEPT
+    "JUN-SEPT": "Monsoon", # aggregate
 }
 
-def row_val(row, key):
-    v = row.get(key, "")
-    return "" if v is None else str(v).strip()
+MONSOON_MONTHS = ["Jun", "Jul", "Aug", "Sep"]
 
-def _is_number(s: str) -> bool:
+def numfmt(x) -> Optional[str]:
+    """Pretty formatting for numbers: int if whole, else one decimal."""
+    if x is None or x == "":
+        return None
     try:
-        float(s)
-        return True
+        v = float(x)
     except Exception:
-        return False
+        return None
+    return f"{int(v)}" if abs(v - round(v)) < 1e-9 else f"{v:.1f}"
 
-def format_value(key, raw):
-    """Append units when the value is numeric and a unit is defined."""
-    if raw == "":
-        return ""
-    unit = UNITS.get(key)
-    # if value already has a % and unit is %, don't double-append
-    if unit == "%" and raw.endswith("%"):
-        return raw
-    # numeric check
-    if _is_number(raw):
-        # keep as-is or lightly format; here we avoid over-rounding
-        val = float(raw)
-        # show int if whole number, else one decimal
-        s = f"{int(val)}" if abs(val - round(val)) < 1e-9 else f"{val:.1f}"
-        return f"{s}{(' ' + unit) if unit else ''}"
-    else:
-        # non-numeric string (e.g., "Jun", "kharif")
-        return raw
+def build_month_record(base_src: str, year: int, abbr: str, actual_mm: Optional[str], dep_pct: Optional[str]) -> Optional[Dict]:
+    if actual_mm is None and dep_pct is None:
+        return None
+    text_bits = [f"Year: {year}. Month: {abbr}. Monsoon rainfall"]
+    if actual_mm is not None:
+        text_bits.append(f"{actual_mm} mm")
+    if dep_pct is not None:
+        # include explicit plus sign for positive departures to aid parsing
+        sign_val = dep_pct if dep_pct.startswith("-") or dep_pct.startswith("+") else (f"+{dep_pct}" if not dep_pct.startswith("-") else dep_pct)
+        text_bits.append(f"(departure {sign_val}%)")
+    text = " ".join(text_bits) + ". This record is from IMD monsoon statistics (rainfall, departure)."
+    return {
+        "text": text,
+        "source": f"{base_src}#year={year}/month={abbr}",
+        "state": None,                # dataset is all-India unless you add a region
+        "region": "all-india",
+        "metric": "rainfall",
+        "year": year,
+        "months": [abbr],
+    }
 
-def row_to_text(row):
-    parts = []
-    for label, key in FIELDS:
-        raw = row_val(row, key)
-        if raw != "":
-            parts.append(f"{label}: {format_value(key, raw)}")
-    return ". ".join(parts) + "."
+def build_agg_record(base_src: str, year: int, total_mm: Optional[str], dep_pct: Optional[str]) -> Optional[Dict]:
+    if total_mm is None and dep_pct is None:
+        return None
+    text = (f"Year: {year}. Monsoon (Jun–Sep) total rainfall: "
+            f"{total_mm + ' mm' if total_mm else 'N/A'}"
+            f"{' (departure ' + (dep_pct if dep_pct.startswith('-') or dep_pct.startswith('+') else ('+'+dep_pct)) + '%)' if dep_pct else ''}."
+            " This is an all-India IMD monsoon aggregate.")
+    return {
+        "text": text,
+        "source": f"{base_src}#year={year}/season=Jun-Sep",
+        "state": None,
+        "region": "all-india",
+        "metric": "rainfall",
+        "year": year,
+        "months": MONSOON_MONTHS[:],   # list of the four months
+        "season": "Monsoon",
+    }
 
-def _safe_name(s: str) -> str:
-    """Filesystem-safe-ish filename chunk."""
-    s = s.strip() or "UNKNOWN"
-    s = re.sub(r"[^\w\-]+", "_", s, flags=re.UNICODE)  # spaces/punct -> _
-    return s[:80]  # avoid overly long filenames
-
-def csv_to_jsonl_sharded(csv_path, out_prefix, group_by=None, max_rows_per_file=50000):
-    """
-    If `group_by` is provided and exists in CSV, write one JSONL per group:
-        {out_prefix}__{groupval}.jsonl
-    Else, shard by count:
-        {out_prefix}__part{N}.jsonl  (each ~max_rows_per_file rows)
-    """
-    with open(csv_path, newline="", encoding="utf-8") as csvfile:
-        reader = csv.DictReader(csvfile)
-        rows = list(reader)
-        fieldnames = reader.fieldnames or []
-
+def convert(csv_path: str, out_prefix: str):
     base_csv = os.path.basename(csv_path)
+    out_path = f"{out_prefix}__monsoon.jsonl"
+    records: List[Dict] = []
 
-    # --- Path 1: group-wise sharding ---
-    if group_by and group_by in fieldnames:
-        groups = defaultdict(list)
-        for i, row in enumerate(rows):
-            groups[row.get(group_by, "UNKNOWN")].append((i, row))
+    with open(csv_path, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        # normalize headers (strip spaces)
+        headers = [h.strip() for h in (reader.fieldnames or [])]
 
-        for gval, items in groups.items():
-            safe = _safe_name(str(gval))
-            out_path = f"{out_prefix}__{safe}.jsonl"
-            with open(out_path, "w", encoding="utf-8") as out:
-                for idx, row in items:
-                    text = row_to_text(row)
-                    entry = {
-                        "text": text,
-                        "source": f"{base_csv}#{group_by}={gval}/row{idx}"
-                    }
-                    out.write(json.dumps(entry, ensure_ascii=False) + "\n")
-            print(f"✅ Wrote {len(items)} rows → {out_path}")
+        for row in reader:
+            # parse year
+            y_raw = (row.get("YEAR") or row.get("Year") or "").strip()
+            if not y_raw or not re.fullmatch(r"\d{4}", y_raw):
+                # skip malformed year rows
+                continue
+            year = int(y_raw)
 
-    # --- Path 2: fixed-size shards ---
-    else:
-        part = -1
-        out = None
-        written_in_part = 0
-        for idx, row in enumerate(rows):
-            cur_part = idx // max_rows_per_file
-            if cur_part != part:
-                if out:
-                    out.close()
-                    print(f"✅ Wrote {written_in_part} rows → {out_path}")
-                part = cur_part
-                written_in_part = 0
-                out_path = f"{out_prefix}__part{part}.jsonl"
-                out = open(out_path, "w", encoding="utf-8")
+            # Gather monthly fields
+            for raw_mon, abbr in MONTH_KEY.items():
+                if raw_mon == "JUN-SEPT":
+                    continue  # handle aggregate later
+                # handle both "Actual Rainfall: JUN" and "Actual Rainfall: SEPT"
+                actual_key = f"Actual Rainfall: {raw_mon}"
+                dep_key = f"Departure Percentage: {raw_mon if raw_mon != 'SEPT' else 'SEP'}"
+                a = numfmt(row.get(actual_key, "").strip())
+                d = numfmt(row.get(dep_key, "").strip())
+                rec = build_month_record(base_csv, year, abbr, a, d)
+                if rec:
+                    records.append(rec)
 
-            text = row_to_text(row)
-            entry = {
-                "text": text,
-                "source": f"{base_csv}#row{idx}"
-            }
-            out.write(json.dumps(entry, ensure_ascii=False) + "\n")
-            written_in_part += 1
+            # Aggregate Jun–Sep
+            total_key = "Actual Rainfall: JUN-SEPT"
+            dep_tot_key = "Departure Percentage: JUN-SEPT"
+            a_tot = numfmt(row.get(total_key, "").strip())
+            d_tot = numfmt(row.get(dep_tot_key, "").strip())
+            agg = build_agg_record(base_csv, year, a_tot, d_tot)
+            if agg:
+                records.append(agg)
 
-        if out:
-            out.close()
-            print(f"✅ Wrote {written_in_part} rows → {out_path}")
+    # Write JSONL
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    with open(out_path, "w", encoding="utf-8") as out:
+        for rec in records:
+            out.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    print(f"✅ Wrote {len(records)} records → {out_path}")
 
 if __name__ == "__main__":
-    # INPUT CSV
-    CSV_PATH = "../datasets/Crop_recommendation_dataset.csv"
-
-    # OUTPUT prefix (files will be data_v4__*.jsonl)
-    OUT_PREFIX = "../data/data_v4"
-
-    # Try grouping by a column if it exists (e.g., "STATE"); else will shard by count.
-    csv_to_jsonl_sharded(
-        csv_path=CSV_PATH,
-        out_prefix=OUT_PREFIX,
-        group_by="STATE",          # change/remove if not present in your CSV
-        max_rows_per_file=50000    # used only when group_by is absent
-    )
+    # INPUT CSV (your sample schema)
+    CSV_PATH = "../datasets/nw_India_rainfall_act_dep_1901_2015.csv"
+    # Output prefix; file will be something like ../data/data_rain__monsoon.jsonl
+    OUT_PREFIX = "../data/data_v6"
+    convert(CSV_PATH, OUT_PREFIX)
     print("🎉 Done.")

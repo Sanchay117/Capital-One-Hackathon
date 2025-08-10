@@ -3,6 +3,7 @@
 -   [Agrollm Dataset (Kaggle)](https://www.kaggle.com/datasets/viswambhar/agrollm-data)
 -   [Crop Recommendation (Kaggle)](https://www.kaggle.com/datasets/saganachinnathambi/crop-recommendation)
 -   [Wholesale Crop Price Dataset (2022–2023) (Kaggle)](https://www.kaggle.com/datasets/shraddhadeshmukh21/wholesale-crop-price-dataset-20222023)
+-   [Monsoon Rainfall Trends – NW India (1901–2015)](https://www.kaggle.com/datasets/hmnshudhmn24/monsoon-rainfall-trends-nw-india-19012015)
 
 ### Websites Scraped
 
