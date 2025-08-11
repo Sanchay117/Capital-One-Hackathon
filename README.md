@@ -8,6 +8,7 @@
 -   [Crop Production Data ( Raw + Refined)](https://www.kaggle.com/datasets/kunshbhatia/crop-production-data-raw-refined)
 -   [Indian Government Schemes](https://www.kaggle.com/datasets/jainamgada45/indian-government-schemes)
 -   [Indian Agricultural Mandi Prices (2023–2025)](https://www.kaggle.com/datasets/arjunyadav99/indian-agricultural-mandi-prices-20232025)
+-   [India Agriculture Crop Production](https://www.kaggle.com/datasets/pyatakov/india-agriculture-crop-production)
 
 ### Websites Scraped
 
