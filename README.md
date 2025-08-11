@@ -9,6 +9,7 @@
 -   [Indian Government Schemes](https://www.kaggle.com/datasets/jainamgada45/indian-government-schemes)
 -   [Indian Agricultural Mandi Prices (2023–2025)](https://www.kaggle.com/datasets/arjunyadav99/indian-agricultural-mandi-prices-20232025)
 -   [India Agriculture Crop Production](https://www.kaggle.com/datasets/pyatakov/india-agriculture-crop-production)
+-   [Indian Agriculture Dataset](https://www.kaggle.com/datasets/vineetkukreti/indian-agriculture-dataset)
 
 ### Websites Scraped
 
