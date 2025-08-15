@@ -6,7 +6,9 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from .models import ChatMessage
 from .serializers import RegisterSerializer, ChatMessageSerializer
 from rest_framework.views import APIView
-from rest_framework.decorators import api_view, permission_classes  # add decorator imports
+from rest_framework.decorators import api_view, permission_classes 
+from rest_framework.permissions import AllowAny  
+import traceback 
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -53,11 +55,11 @@ class PromptAPIView(APIView):
     Handles AI prompt requests.
     Receives a text prompt and returns a response from the Gemini model.
     """
-    permission_classes = [permissions.AllowAny] # TODO: Change to [IsAuthenticated]
+    permission_classes = [AllowAny]  # TODO: Change to [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         prompt = request.data.get("prompt")
-        language = request.data.get("language", "en") # Default to English
+        language = request.data.get("language", "en")  # Default to English
 
         if not prompt:
             return Response(
@@ -66,18 +68,18 @@ class PromptAPIView(APIView):
             )
 
         try:
-            # TODO: Once authentication is added, save messages to the database
-            # ChatMessage.objects.create(user=request.user, sender='user', text=prompt)
-
-            # Get response from the LLM
+            print(f"Received prompt: '{prompt}' for language: '{language}'")  # Log incoming request
             ai_response = get_gemini_response(prompt, language)
-
-            # TODO: Once authentication is added, save AI response to the database
-            # ChatMessage.objects.create(user=request.user, sender='ai', text=ai_response)
-
+            print("Successfully received response from Gemini.")  # Log success
             return Response({"response": ai_response}, status=status.HTTP_200_OK)
 
         except Exception as e:
+            # Log the full error to the console to see what's happening
+            print("--- ERROR IN PromptAPIView ---")
+            print(f"Error processing prompt: {str(e)}")
+            traceback.print_exc()  # This will print the full traceback
+            print("-----------------------------")
+            
             return Response(
                 {"error": f"Error processing prompt: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR

@@ -9,13 +9,14 @@ from google import genai                     # <-- google-genai SDK
 
 # === ENV & keys ==============================================================
 load_dotenv()
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+# Try to get the key from either environment variable name
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
 if not GEMINI_API_KEY:
-    raise RuntimeError("Set GEMINI_API_KEY in your .env or shell!")
+    raise RuntimeError("Set GEMINI_API_KEY or GOOGLE_API_KEY in your .env or shell!")
 
 # === Gemini client ===========================================================
-GEMINI_MODEL = "gemini-2.5-flash-lite"
-gemini = genai.Client(api_key=GEMINI_API_KEY)
+GEMINI_MODEL = "models/gemini-1.5-flash" # Use full model name for client
+client = genai.Client(api_key=GEMINI_API_KEY) # Use Client syntax
 
 # === Embeddings & vector DB ==================================================
 # locate project root and data file
@@ -69,9 +70,9 @@ def generate_answer(user_query, k=3):
     prompt  = build_prompt(context, user_query)
 
     # 3 Gemini call
-    resp = gemini.models.generate_content(
-        model     = GEMINI_MODEL,
-        contents  = prompt,
+    resp = client.models.generate_content( 
+        model=GEMINI_MODEL,
+        contents=prompt,
     )
     return resp.text.strip()
 
@@ -94,7 +95,7 @@ def get_gemini_response(user_query, language="en"):
     prompt = build_prompt(context, final_query)
 
     # 4. Call the Gemini API
-    resp = gemini.models.generate_content(
+    resp = client.models.generate_content( # <-- Add .models back
         model=GEMINI_MODEL,
         contents=prompt,
     )
