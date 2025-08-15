@@ -55,7 +55,7 @@ class PromptAPIView(APIView):
     Handles AI prompt requests.
     Receives a text prompt and returns a response from the Gemini model.
     """
-    permission_classes = [AllowAny]  # TODO: Change to [IsAuthenticated]
+    permission_classes = [AllowAny] 
 
     def post(self, request, *args, **kwargs):
         prompt = request.data.get("prompt")
@@ -68,16 +68,15 @@ class PromptAPIView(APIView):
             )
 
         try:
-            print(f"Received prompt: '{prompt}' for language: '{language}'")  # Log incoming request
+            print(f"Received prompt: '{prompt}' for language: '{language}'")  
             ai_response = get_gemini_response(prompt, language)
-            print("Successfully received response from Gemini.")  # Log success
+            print("Successfully received response from Gemini.")  
             return Response({"response": ai_response}, status=status.HTTP_200_OK)
 
         except Exception as e:
-            # Log the full error to the console to see what's happening
             print("--- ERROR IN PromptAPIView ---")
             print(f"Error processing prompt: {str(e)}")
-            traceback.print_exc()  # This will print the full traceback
+            traceback.print_exc()  
             print("-----------------------------")
             
             return Response(

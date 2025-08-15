@@ -5,21 +5,19 @@ import faiss
 from dotenv import load_dotenv
 from pathlib import Path
 from sentence_transformers import SentenceTransformer
-from google import genai                     # <-- google-genai SDK
+from google import genai                    
 
 # === ENV & keys ==============================================================
 load_dotenv()
-# Try to get the key from either environment variable name
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
 if not GEMINI_API_KEY:
     raise RuntimeError("Set GEMINI_API_KEY or GOOGLE_API_KEY in your .env or shell!")
 
 # === Gemini client ===========================================================
-GEMINI_MODEL = "models/gemini-1.5-flash" # Use full model name for client
-client = genai.Client(api_key=GEMINI_API_KEY) # Use Client syntax
+GEMINI_MODEL = "models/gemini-1.5-flash" 
+client = genai.Client(api_key=GEMINI_API_KEY) 
 
 # === Embeddings & vector DB ==================================================
-# locate project root and data file
 BASE_DIR = Path(__file__).resolve().parent.parent
 PROJECT_ROOT = BASE_DIR.parent
 DATA_FILE = PROJECT_ROOT / "data" / "data.jsonl"
@@ -95,7 +93,7 @@ def get_gemini_response(user_query, language="en"):
     prompt = build_prompt(context, final_query)
 
     # 4. Call the Gemini API
-    resp = client.models.generate_content( # <-- Add .models back
+    resp = client.models.generate_content( 
         model=GEMINI_MODEL,
         contents=prompt,
     )

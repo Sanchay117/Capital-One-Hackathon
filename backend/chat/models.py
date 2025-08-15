@@ -24,7 +24,7 @@ class ChatMessage(models.Model):
     class Meta:
         ordering = ['created_at']
 
-# load once at import‐time
+# loading the model at import time
 _whisper_model = whisper.load_model("base")
 
 @api_view(["POST"])
