@@ -19,7 +19,8 @@ function AgriAdvisorApp() {
     const [isChatActive, setIsChatActive] = useState(false);
     const [globalLanguage, setGlobalLanguage] = useState('en');
     const [isRecording, setIsRecording] = useState(false);
-    const [isTranscribing, setIsTranscribing] = useState(false); // This state is now used
+    const [isTranscribing, setIsTranscribing] = useState(false); 
+    const [isTyping, setIsTyping] = useState(false);
     const mediaRecorder = useRef(null);
     const audioChunks = useRef([]);
 
@@ -61,13 +62,49 @@ function AgriAdvisorApp() {
     const handleSendMessage = (text) => {
         if (text.trim() === '') return;
         if (!isChatActive) setIsChatActive(true);
-        const newTurn = {
-            id: Date.now(),
-            prompt: text,
-            response: `This is a static response to your question about "${text}". In a real application, the AI would provide a detailed, dynamic answer based on your query.`
-        };
-        setMessages([...messages, newTurn]);
+
+        const turnIndex = messages.length;
+        const newUserTurn = { prompt: text, response: null };
+        setMessages(prevMessages => [...prevMessages, newUserTurn]);
+        
         setInput('');
+        setIsTyping(true);
+
+        fetch('http://localhost:8000/api/prompt/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                prompt: text,
+                language: globalLanguage
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            setMessages(prevMessages => {
+                const newMessages = [...prevMessages];
+                newMessages[turnIndex].response = data.response;
+                return newMessages;
+            });
+        })
+        .catch(err => {
+            console.error("Error getting AI response:", err);
+            // Update the existing turn with an error message
+            setMessages(prevMessages => {
+                const newMessages = [...prevMessages];
+                newMessages[turnIndex].response = "Sorry, something went wrong. Please try again.";
+                return newMessages;
+            });
+        })
+        .finally(() => {
+            setIsTyping(false);
+        });
     };
     
     // --- AUDIO RECORDING & TRANSCRIPTION IMPLEMENTATION ---
@@ -84,8 +121,9 @@ function AgriAdvisorApp() {
                     const audioBlob = new Blob(audioChunks.current, { type: 'audio/webm' });
                     const formData = new FormData();
                     formData.append('audio', audioBlob);
+                    formData.append('language', globalLanguage);
 
-                    fetch('/api/transcribe', {
+                    fetch('http://localhost:8000/api/transcribe/', {
                         method: 'POST',
                         body: formData,
                     })
@@ -97,6 +135,7 @@ function AgriAdvisorApp() {
                     })
                     .then(data => {
                         setInput(data.text);
+                        handleSendMessage(data.text);
                     })
                     .catch(err => {
                         console.error("Error during transcription:", err);

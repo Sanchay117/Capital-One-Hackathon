@@ -30,32 +30,22 @@ _whisper_model = whisper.load_model("base")
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def transcribe_audio(request):
-    """
-    Accepts multipart/form-data:
-      - audioFile: the Blob/webm
-      - language: e.g. "en-IN"
-    Returns JSON { transcribedText: str }
-    """
-    audio = request.FILES.get("audioFile")
-    lang  = request.POST.get("language", "")
-    if not audio or not lang:
-        return Response({"detail": "audioFile + language required"},
-                        status=status.HTTP_400_BAD_REQUEST)
+    if 'audio' not in request.FILES:
+        return Response({'error': 'No audio file provided'}, status=status.HTTP_400_BAD_REQUEST)
 
-    # write to temp file
-    ext = audio.name.split(".")[-1]
-    tf = tempfile.NamedTemporaryFile(delete=False, suffix=f".{ext}")
-    for chunk in audio.chunks():
-        tf.write(chunk)
-    tf.flush()
-    tf.close()
+    audio_file = request.FILES['audio']
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as tmp:
+        for chunk in audio_file.chunks():
+            tmp.write(chunk)
+        tmp_path = tmp.name
 
     try:
-        # whisper expects ISO code like "en"
-        code = lang.split("-")[0]
-        result = _whisper_model.transcribe(tf.name, language=code)
+        result = _whisper_model.transcribe(tmp_path, fp16=False)
         text = result.get("text", "").strip()
+        return Response({'text': text})
+    except Exception as e:
+        return Response({'error': f"Error during transcription: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     finally:
-        os.unlink(tf.name)
-
-    return Response({"transcribedText": text})
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)

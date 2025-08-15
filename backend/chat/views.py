@@ -1,4 +1,4 @@
-from agriadvisor.utils import generate_answer
+from agriadvisor.utils import generate_answer, get_gemini_response
 from django.contrib.auth.models import User
 from rest_framework import generics, permissions, viewsets, status
 from rest_framework.response import Response
@@ -49,11 +49,36 @@ def prompt_view(request):
     return Response({'answer': answer}, status=status.HTTP_200_OK)
 
 class PromptAPIView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    """
+    Handles AI prompt requests.
+    Receives a text prompt and returns a response from the Gemini model.
+    """
+    permission_classes = [permissions.AllowAny] # TODO: Change to [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        prompt = request.data.get('prompt', '').strip()
+        prompt = request.data.get("prompt")
+        language = request.data.get("language", "en") # Default to English
+
         if not prompt:
-            return Response({'detail': 'Prompt is required.'}, status=status.HTTP_400_BAD_REQUEST)
-        answer = generate_answer(prompt)
-        return Response({'answer': answer}, status=status.HTTP_200_OK)
+            return Response(
+                {"error": "Prompt not provided"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            # TODO: Once authentication is added, save messages to the database
+            # ChatMessage.objects.create(user=request.user, sender='user', text=prompt)
+
+            # Get response from the LLM
+            ai_response = get_gemini_response(prompt, language)
+
+            # TODO: Once authentication is added, save AI response to the database
+            # ChatMessage.objects.create(user=request.user, sender='ai', text=ai_response)
+
+            return Response({"response": ai_response}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response(
+                {"error": f"Error processing prompt: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

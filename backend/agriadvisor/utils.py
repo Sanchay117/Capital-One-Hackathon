@@ -75,6 +75,32 @@ def generate_answer(user_query, k=3):
     )
     return resp.text.strip()
 
+def get_gemini_response(user_query, language="en"):
+    """
+    Generates a response from the Gemini model using RAG, tailored to a specific language.
+    """
+    # 1. Perform RAG search to find relevant context (same as generate_answer)
+    q_embed = embedder.encode([user_query])
+    _, idxs = index.search(np.array(q_embed), 3) # k=3
+
+    # 2. Build the context from retrieved documents
+    context = build_context_with_sources(idxs[0])
+
+    # 3. Create a new prompt that instructs the model to use the specified language
+    final_query = (
+        f"Based on the context provided, answer the following question: '{user_query}'. "
+        f"Please provide the entire response in the language with code: {language}."
+    )
+    prompt = build_prompt(context, final_query)
+
+    # 4. Call the Gemini API
+    resp = gemini.models.generate_content(
+        model=GEMINI_MODEL,
+        contents=prompt,
+    )
+    return resp.text.strip()
+
+
 # === CLI loop ================================================================
 if __name__ == "__main__":
     print("🌾  Ask your agri-related question (Ctrl+C to quit):")
