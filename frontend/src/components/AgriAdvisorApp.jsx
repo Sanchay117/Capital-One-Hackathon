@@ -8,37 +8,138 @@ import Sidebar from './Sidebar';
 import { translations } from '../translations';
 import { FiMenu } from 'react-icons/fi';
 
-function AgriAdvisorApp() {
+function AgriAdvisorApp({ onLogout }) {
     // --- STATE MANAGEMENT ---
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    // THE FIX: Sidebar now starts in the 'open' state by default.
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const profileMenuRef = useRef(null);
+    const [chatHistory, setChatHistory] = useState([]);
+    const [activeChat, setActiveChat] = useState(null);
     const [messages, setMessages] = useState([]);
     const [showKeyboard, setShowKeyboard] = useState(false);
     const [input, setInput] = useState('');
     const [isChatActive, setIsChatActive] = useState(false);
-    const [globalLanguage, setGlobalLanguage] = useState('en');
+    const [globalLanguage, setGlobalLanguage] = useState(localStorage.getItem('userLanguage') || 'en');
     const [isRecording, setIsRecording] = useState(false);
-    const [isTranscribing, setIsTranscribing] = useState(false); 
-    const [isTyping, setIsTyping] = useState(false);
+    const [isTranscribing, setIsTranscribing] = useState(false);
     const mediaRecorder = useRef(null);
     const audioChunks = useRef([]);
 
-    // --- DUMMY DATA (Unchanged) ---
-    const dummyChatHistory = [
-        { id: 1, title: 'Fertilizer recommendations for wheat' },
-        { id: 2, title: 'Best time to plant corn in my area' },
-        { id: 3, title: 'How to handle pest infestation' },
-        { id: 4, title: 'Crop rotation strategies' },
-        { id: 5, title: 'Soil health and nutrient management' },
-        { id: 6, title: 'Irrigation techniques for dry seasons' },
-        { id: 7, title: 'Market prices for soybeans' },
-    ];
+    // --- API & DATA HANDLING ---
+    const fetchChatHistory = async () => {
+        const token = localStorage.getItem('accessToken');
+        try {
+            const response = await fetch('http://127.0.0.1:8000/api/chats/', {
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+            if (response.status === 401) {
+                onLogout();
+                return null; // Return null to indicate failure
+            }
+            return await response.json();
+        } catch (err) {
+            console.error("Failed to fetch chat history:", err);
+            return null;
+        }
+    };
 
-    // --- HANDLERS ---
+    useEffect(() => {
+        const initializeUserSession = async () => {
+            const historyData = await fetchChatHistory();
+            if (historyData) {
+                setChatHistory(historyData);
+                // Automatically load the most recent chat if one exists
+                if (historyData.length > 0) {
+                    await loadChat(historyData[0].id);
+                } else {
+                    // If no history, start with the new chat page
+                    setIsChatActive(false);
+                }
+            }
+        };
+        initializeUserSession();
+    }, []); // Run only once on initial component mount
+
+    const handleLanguageChange = (lang) => {
+        setGlobalLanguage(lang);
+        localStorage.setItem('userLanguage', lang);
+    };
+
+    const loadChat = async (chatId) => {
+        const token = localStorage.getItem('accessToken');
+        try {
+            const response = await fetch(`http://127.0.0.1:8000/api/chats/${chatId}/`, {
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+            if (response.status === 401) { onLogout(); return; }
+            const data = await response.json();
+            setActiveChat(data);
+            const formattedMessages = data.messages.map(msg => ({
+                prompt: msg.prompt_text,
+                response: msg.response_text
+            }));
+            setMessages(formattedMessages);
+            setIsChatActive(true);
+            // THE FIX: Do NOT close the sidebar when loading a chat. The user should control this.
+            // setIsSidebarOpen(false); // This line has been removed.
+        } catch (err) {
+            console.error("Failed to load chat:", err);
+        }
+    };
+    
+    const handleSendMessage = async (text) => {
+        if (text.trim() === '') return;
+        
+        const token = localStorage.getItem('accessToken');
+        const tempUserTurn = { prompt: text, response: "..." };
+        setMessages(prev => [...prev, tempUserTurn]);
+        setInput('');
+        if (!isChatActive) setIsChatActive(true);
+        
+        try {
+            const response = await fetch('http://127.0.0.1:8000/api/messages/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    prompt: text,
+                    chat_id: activeChat ? activeChat.id : null,
+                    input_type: "text", // This would be dynamic for audio
+                    input_language: globalLanguage,
+                }),
+            });
+
+            if (response.status === 401) { onLogout(); return; }
+            const data = await response.json();
+            
+            setActiveChat(data);
+            setMessages(data.messages.map(msg => ({ prompt: msg.prompt_text, response: msg.response_text })));
+            
+            // After sending a message, refresh the chat history to update the order and title.
+            const newHistory = await fetchChatHistory();
+            if (newHistory) setChatHistory(newHistory);
+
+        } catch (err) {
+            console.error("Error sending message:", err);
+            setMessages(prev => prev.slice(0, -1)); // Remove the temp message on error
+        }
+    };
+    
+    // --- OTHER HANDLERS ---
+    const handleNewChat = () => {
+        setIsChatActive(false);
+        setMessages([]);
+        setActiveChat(null);
+        setInput('');
+        setIsSidebarOpen(true); // Ensure sidebar is open for a new chat
+    };
+
     const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
     const toggleProfileMenu = () => setIsProfileMenuOpen(!isProfileMenuOpen);
-    const handleLogout = () => { alert("Logout functionality would be handled here."); };
+    
     useEffect(() => {
         function handleClickOutside(event) {
             if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
@@ -48,67 +149,14 @@ function AgriAdvisorApp() {
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [profileMenuRef]);
-    
+
     const handleKeyPress = (key) => {
-        if (key === 'Enter') {
-            handleSendMessage(input);
-        } else if (key === 'Backspace') {
-            setInput(input.slice(0, -1));
-        } else {
-            setInput(input + key);
-        }
-    };
-
-    const handleSendMessage = (text) => {
-        if (text.trim() === '') return;
-        if (!isChatActive) setIsChatActive(true);
-
-        const turnIndex = messages.length;
-        const newUserTurn = { prompt: text, response: null };
-        setMessages(prevMessages => [...prevMessages, newUserTurn]);
-        
-        setInput('');
-        setIsTyping(true);
-
-        fetch('http://localhost:8000/api/prompt/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                prompt: text,
-                language: globalLanguage
-            })
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            setMessages(prevMessages => {
-                const newMessages = [...prevMessages];
-                newMessages[turnIndex].response = data.response;
-                return newMessages;
-            });
-        })
-        .catch(err => {
-            console.error("Error getting AI response:", err);
-            // Update the existing turn with an error message
-            setMessages(prevMessages => {
-                const newMessages = [...prevMessages];
-                newMessages[turnIndex].response = "Sorry, something went wrong. Please try again.";
-                return newMessages;
-            });
-        })
-        .finally(() => {
-            setIsTyping(false);
-        });
+        if (key === 'Enter') handleSendMessage(input);
+        else if (key === 'Backspace') setInput(input.slice(0, -1));
+        else setInput(input + key);
     };
     
-    // --- AUDIO RECORDING & TRANSCRIPTION IMPLEMENTATION ---
-    const startRecording = () => {
+const startRecording = () => {
         navigator.mediaDevices.getUserMedia({ audio: true })
             .then(stream => {
                 const recorder = new MediaRecorder(stream);
@@ -172,7 +220,7 @@ function AgriAdvisorApp() {
         }
     };
 
-    const currentTranslation = translations[globalLanguage];
+    const currentTranslation = translations[globalLanguage] || translations.en;
 
     // --- RENDER LOGIC ---
     const renderLandingPage = () => (
@@ -183,18 +231,17 @@ function AgriAdvisorApp() {
                         <h1>Agri-Advisor AI</h1>
                         <p>{currentTranslation.subtitle}</p>
                     </div>
-                    <LanguageSelector setGlobalLanguage={setGlobalLanguage} />
+                    <LanguageSelector setGlobalLanguage={handleLanguageChange} />
                 </header>
                 <div className="input-area-wrapper">
-                    <InputArea
-                        input={input}
-                        setInput={setInput}
-                        onSendMessage={() => handleSendMessage(input)}
+                    <InputArea 
+                        {...{input, setInput, isRecording, isTranscribing, handleAudioClick}}
+                        onSendMessage={handleSendMessage} 
                         toggleKeyboard={() => setShowKeyboard(!showKeyboard)}
                         placeholderText={currentTranslation.placeholder}
-                        isRecording={isRecording}
-                        isTranscribing={isTranscribing} // <-- 1. ADD THIS LINE
-                        handleAudioClick={handleAudioClick}
+                        tooltipAudio={currentTranslation.tooltipAudio}
+                        tooltipKeyboard={currentTranslation.tooltipKeyboard}
+                        tooltipSend={currentTranslation.tooltipSend}
                     />
                 </div>
             </main>
@@ -205,24 +252,21 @@ function AgriAdvisorApp() {
     const renderActiveChat = () => (
         <div className="app-container chat-active">
             <header className="app-header"> 
-                <div className="header-content">
-                    <h1>Agri-Advisor AI</h1>
-                </div>
-                <LanguageSelector setGlobalLanguage={setGlobalLanguage} />
+                <div className="header-content"><h1>Agri-Advisor AI</h1></div>
+                <LanguageSelector setGlobalLanguage={handleLanguageChange} />
             </header>
             <ChatInterface messages={messages} />
             <div className="chat-input-section">
                 {showKeyboard && <OnScreenKeyboard onKeyPress={handleKeyPress} />}
                 <div className="input-area-wrapper">
-                    <InputArea
-                        input={input}
-                        setInput={setInput}
-                        onSendMessage={() => handleSendMessage(input)}
+                    <InputArea 
+                        {...{input, setInput, isRecording, isTranscribing, handleAudioClick}}
+                        onSendMessage={handleSendMessage} 
                         toggleKeyboard={() => setShowKeyboard(!showKeyboard)}
                         placeholderText={currentTranslation.placeholder}
-                        isRecording={isRecording}
-                        isTranscribing={isTranscribing} // <-- 2. ADD THIS LINE
-                        handleAudioClick={handleAudioClick}
+                        tooltipAudio={currentTranslation.tooltipAudio}
+                        tooltipKeyboard={currentTranslation.tooltipKeyboard}
+                        tooltipSend={currentTranslation.tooltipSend}
                     />
                 </div>
             </div>
@@ -231,6 +275,7 @@ function AgriAdvisorApp() {
 
     return (
         <div className={`app-layout ${isSidebarOpen ? 'sidebar-open' : ''}`}>
+            {/* The open button is now only for when a user explicitly closes the sidebar */}
             {!isSidebarOpen && (
                 <button className="sidebar-open-button" onClick={toggleSidebar}>
                     <FiMenu />
@@ -239,11 +284,15 @@ function AgriAdvisorApp() {
 
             <Sidebar
                 isOpen={isSidebarOpen}
-                chatHistory={dummyChatHistory}
+                chatHistory={chatHistory} 
                 onClose={toggleSidebar}
                 onProfileClick={toggleProfileMenu}
                 isProfileMenuOpen={isProfileMenuOpen}
-                onLogout={handleLogout}
+                onNewChat={handleNewChat} 
+                isChatActive={isChatActive}
+                onLogout={onLogout}
+                onLoadChat={loadChat}
+                translations={currentTranslation} // <-- THE FIX: Pass the current translation object
                 ref={profileMenuRef}
             />
 

@@ -1,41 +1,67 @@
-import React, { useState } from 'react';
-
-// Import all the components that will act as "pages"
+import React, { useState, useEffect } from 'react';
 import AgriAdvisorApp from './components/AgriAdvisorApp';
 import LoginPage from './components/Auth/LoginPage';
 import SignupPage from './components/Auth/SignupPage';
+import GoogleSignupCompletion from './components/Auth/GoogleSignupCompletion';
 
 function App() {
-  // 'isAuthenticated' determines if we show the login flow or the main app.
-  // 'currentView' switches between 'login' and 'signup'.
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentView, setCurrentView] = useState('login');
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [currentView, setCurrentView] = useState('login');
+    const [googleUserData, setGoogleUserData] = useState(null);
 
-  // This function will be passed to LoginPage and called on a successful login
-  const handleLoginSuccess = () => {
-    setIsAuthenticated(true);
-  };
+    // This function runs when the app first loads
+    useEffect(() => {
+        // Check if there's a token in local storage to auto-login the user
+        const token = localStorage.getItem('accessToken');
+        if (token) {
+            setIsAuthenticated(true);
+        }
+    }, []);
 
-  // This function toggles between the Login and Signup forms
-  const toggleView = () => {
-    setCurrentView(currentView === 'login' ? 'signup' : 'login');
-  };
+    const handleLoginSuccess = (data) => {
+        // Store tokens and user info in local storage
+        localStorage.setItem('accessToken', data.access);
+        localStorage.setItem('refreshToken', data.refresh);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        setIsAuthenticated(true);
+    };
 
-  // Conditional Rendering Logic
-  if (isAuthenticated) {
-    // If the user is logged in, show the main Agri-Advisor application
-    return <AgriAdvisorApp />;
-  } else {
-    // If not logged in, show either the Login or Signup page
-    switch (currentView) {
-      case 'login':
-        return <LoginPage onToggleView={toggleView} onLoginSuccess={handleLoginSuccess} />;
-      case 'signup':
-        return <SignupPage onToggleView={toggleView} />;
-      default:
-        return <LoginPage onToggleView={toggleView} onLoginSuccess={handleLoginSuccess} />;
+    const handleGoogleSignupNeeded = (userData) => {
+        // User is new, show them the language selection page
+        setGoogleUserData(userData);
+        setCurrentView('google-complete');
+    };
+
+    const handleLogout = () => {
+        // Clear all session data and return to the login screen
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
+        setIsAuthenticated(false);
+        setCurrentView('login');
+    };
+
+    const toggleView = () => {
+        setCurrentView(currentView === 'login' ? 'signup' : 'login');
+    };
+
+    if (isAuthenticated) {
+        // THE FIX: Pass the handleLogout function as a prop
+        return <AgriAdvisorApp onLogout={handleLogout} />;
+    } else {
+        switch (currentView) {
+            case 'signup':
+                return <SignupPage onToggleView={toggleView} onLoginSuccess={handleLoginSuccess} />;
+            case 'google-complete':
+                return <GoogleSignupCompletion userData={googleUserData} onLoginSuccess={handleLoginSuccess} />;
+            default:
+                return <LoginPage 
+                    onToggleView={toggleView} 
+                    onLoginSuccess={handleLoginSuccess} 
+                    onGoogleSignupNeeded={handleGoogleSignupNeeded}
+                />;
+        }
     }
-  }
 }
 
 export default App;

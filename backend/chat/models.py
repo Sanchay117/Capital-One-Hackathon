@@ -1,51 +1,46 @@
-from django.conf import settings
+import uuid
 from django.db import models
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
-from rest_framework.response import Response
-from rest_framework import status
-import tempfile, os
-import whisper
+from django.conf import settings 
+from django.contrib.auth.models import AbstractUser
+
+# This CustomUser model STAYS in this file.
+class CustomUser(AbstractUser):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    email = models.EmailField(unique=True)
+    google_id = models.CharField(max_length=255, null=True, blank=True, unique=True)
+    preferred_language = models.CharField(max_length=10, default='en')
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username']
+    def __str__(self):
+        return self.email
+
+class Chat(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    # THE FIX: Instead of referencing the class directly, we use a string
+    # from the settings file. Django knows how to resolve this without circular imports.
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='chats')
+    
+    title = models.CharField(max_length=100, default='New Chat')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    class Meta:
+        ordering = ['-updated_at']
+    def __str__(self):
+        return f"{self.title} by {self.user.email}"
 
 class ChatMessage(models.Model):
-    SENDER_CHOICES = [
-        ('user', 'User'),
-        ('ai', 'AI'),
-    ]
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='messages'
-    )
-    sender = models.CharField(max_length=4, choices=SENDER_CHOICES)
-    text = models.TextField()
+    class InputType(models.TextChoices):
+        TEXT = 'text', 'Text'
+        AUDIO = 'audio', 'Audio'
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    chat = models.ForeignKey(Chat, on_delete=models.CASCADE, related_name='messages')
+    prompt_text = models.TextField(default='') 
+    response_text = models.TextField(default='')
+    input_type = models.CharField(max_length=5, choices=InputType.choices, default=InputType.TEXT)
+    input_language = models.CharField(max_length=10, default='en')
     created_at = models.DateTimeField(auto_now_add=True)
-
     class Meta:
         ordering = ['created_at']
-
-# loading the model at import time
-_whisper_model = whisper.load_model("base")
-
-@api_view(["POST"])
-@permission_classes([AllowAny])
-def transcribe_audio(request):
-    if 'audio' not in request.FILES:
-        return Response({'error': 'No audio file provided'}, status=status.HTTP_400_BAD_REQUEST)
-
-    audio_file = request.FILES['audio']
-
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as tmp:
-        for chunk in audio_file.chunks():
-            tmp.write(chunk)
-        tmp_path = tmp.name
-
-    try:
-        result = _whisper_model.transcribe(tmp_path, fp16=False)
-        text = result.get("text", "").strip()
-        return Response({'text': text})
-    except Exception as e:
-        return Response({'error': f"Error during transcription: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    finally:
-        if os.path.exists(tmp_path):
-            os.remove(tmp_path)
+    def __str__(self):
+        return f"Message in chat at {self.created_at}"

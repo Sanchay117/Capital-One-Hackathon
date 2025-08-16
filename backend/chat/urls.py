@@ -1,17 +1,30 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
+from django.urls import path
 from .views import (
-    RegisterView, LoginView, ChatMessageViewSet, PromptAPIView
-)
-from .models import transcribe_audio
+    RegisterView,
+    GoogleLoginView,
+    ChatListView,
+    ChatDetailView,
+    MessageCreateView,
+    TranscribeAudioView,
 
-router = DefaultRouter()
-router.register(r"messages", ChatMessageViewSet, basename="messages")
-
+    )
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 urlpatterns = [
-    path("auth/register/", RegisterView.as_view(), name="register"),
-    path("auth/login/",    LoginView.as_view(),    name="token_obtain_pair"),
-    path("prompt/",          PromptAPIView.as_view(), name="prompt"),
-    path("transcribe/",    transcribe_audio,       name="transcribe_audio"),
-    path("", include(router.urls)),
+# --- Authentication Endpoints ---
+    path('register/', RegisterView.as_view(), name='register'),
+    path('login/', TokenObtainPairView.as_view(), name='login'),
+    path('login/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('login/google/', GoogleLoginView.as_view(), name='google-login'),
+    
+    # --- Chat History & Management Endpoints ---
+    path('chats/', ChatListView.as_view(), name='chat-list'),
+    path('chats/<uuid:pk>/', ChatDetailView.as_view(), name='chat-detail'),
+
+    # --- Message & Agent Interaction Endpoint ---
+    path('messages/', MessageCreateView.as_view(), name='create-message'),
+
+    # --- Audio Transcription Endpoint ---
+    # THE FIX: Corrected .as_Vew() to .as_view()
+    path('transcribe/', TranscribeAudioView.as_view(), name='transcribe-audio'),
+
 ]

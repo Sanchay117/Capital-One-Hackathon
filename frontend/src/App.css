@@ -282,7 +282,7 @@ body {
 }
 
 .app-layout.sidebar-open {
-    grid-template-columns: 220px 1fr; /* Sidebar expands to its defined width */
+    grid-template-columns: 240px 1fr; /* Sidebar expands to its defined width */
 }
 
 .sidebar {
@@ -297,6 +297,11 @@ body {
     overflow: hidden; /* This hides the content when the grid column is 0 */
     z-index: 200;
 }
+.sidebar.open {
+  width: 240px;
+  opacity: 1;
+}
+
 .sidebar.closed {
   width: 0;
   opacity: 0;
@@ -311,6 +316,42 @@ body {
     padding: 18px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     flex-shrink: 0;
+}
+
+.new-chat-container {
+    padding: 10px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.new-chat-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 12px;
+    background-color: transparent;
+    color: #f0f0f0;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.new-chat-button:hover:not(:disabled) {
+    background-color: #2a2a2a;
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.new-chat-button span {
+    margin-left: 10px;
+}
+.new-chat-button:disabled {
+    color: #666;
+    border-color: #444;
+    cursor: not-allowed;
+    background-color: transparent;
 }
 
 .sidebar-header h3 { margin: 0; font-size: 1.1rem; font-weight: 600; }
