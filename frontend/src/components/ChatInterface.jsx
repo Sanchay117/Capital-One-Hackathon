@@ -1,4 +1,5 @@
 import React, { useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
 
 // The ChatInterface now renders a structured conversation log.
 const ChatInterface = ({ messages }) => {
@@ -27,7 +28,7 @@ const ChatInterface = ({ messages }) => {
           {/* Section 2: The AI's Response */}
           <div className="ai-response-container">
             <div className="ai-response">
-              <p>{turn.response}</p>
+              <ReactMarkdown>{turn.response}</ReactMarkdown>
             </div>
           </div>
         </div>
