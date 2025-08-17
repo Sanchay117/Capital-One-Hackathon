@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 import LanguageSelection from './LanguageSelection';
+import { ReactComponent as GoogleLogo } from '../../Assets/google.svg';
 import './Auth.css';
 
 const SignupPage = ({ onToggleView, onLoginSuccess }) => {
@@ -52,11 +53,15 @@ const SignupPage = ({ onToggleView, onLoginSuccess }) => {
                 {error && <p className="auth-error">{error}</p>}
                 
                 <button className="google-button">
-                    <svg className="google-logo-svg" viewBox="0 0 48 48"><path d="..."/></svg>
+                    <GoogleLogo className="google-logo-svg" />
                     Sign Up with Google
                 </button>
 
-                <div className="divider">...</div>
+                <div className="divider">
+                    <span className="divider-line"></span>
+                    <span className="divider-text">OR</span>
+                    <span className="divider-line"></span>
+                </div>
 
                 <form className="auth-form" onSubmit={handleSignupSubmit}>
                     <div className="input-group">
