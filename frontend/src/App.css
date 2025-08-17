@@ -221,6 +221,22 @@ body {
   border-top: 1px solid rgba(0,0,0,0.1);
 }
 
+.chat-active .chat-interface::-webkit-scrollbar {
+    width: 18px; 
+}
+
+.chat-active .chat-interface::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.4); 
+    border-radius: 10px;
+}
+
+.chat-active .chat-interface::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #68f658, #257729); 
+    border-radius: 10px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+}
+
 .language-switcher { margin-bottom: 15px; text-align: center; }
 .language-switcher button { padding: 5px 15px; border: 1px solid var(--primary-color); background-color: white; color: var(--primary-color); cursor: pointer; border-radius: 5px; margin: 0 5px; }
 .language-switcher button.active { background-color: var(--primary-color); color: white; }
@@ -282,7 +298,7 @@ body {
 }
 
 .app-layout.sidebar-open {
-    grid-template-columns: 240px 1fr; /* Sidebar expands to its defined width */
+    grid-template-columns: 240px 1fr; 
 }
 
 .sidebar {
@@ -294,7 +310,7 @@ body {
     flex-direction: column;
     box-shadow: 0 0 20px rgba(0,0,0,0.3);
     transition: width 0.7s ease, opacity 0.5s ease;
-    overflow: hidden; /* This hides the content when the grid column is 0 */
+    overflow: hidden; 
     z-index: 200;
 }
 .sidebar.open {
@@ -372,10 +388,8 @@ body {
 }
 .chat-history-item:hover { background-color: #3a3a3a; }
 
-/* Add this after your .chat-history-item:hover rule */
 
 .chat-history-item {
-    /* THE FIX: Add flex properties to align title and delete button */
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -384,7 +398,6 @@ body {
 .chat-item-title {
     display: flex;
     align-items: center;
-    /* Allow the title to shrink to make room for the button */
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
