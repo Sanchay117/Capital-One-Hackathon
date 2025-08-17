@@ -3,10 +3,10 @@ import '../App.css';
 import ChatInterface from './ChatInterface';
 import InputArea from './InputArea';
 import OnScreenKeyboard from './OnScreenKeyboard';
-import LanguageSelector from './LanguageSelector';
 import Sidebar from './Sidebar';
 import { translations } from '../translations';
 import { FiMenu } from 'react-icons/fi';
+import logo from '../Assets/logo.png';
 
 function AgriAdvisorApp({ onLogout }) {
     // --- STATE MANAGEMENT ---
@@ -266,6 +266,7 @@ function AgriAdvisorApp({ onLogout }) {
                         <h1>Agri-Advisor AI</h1>
                         <p>{currentTranslation.subtitle}</p>
                     </div>
+                    <img src={logo} alt="Agri-Advisor Logo" className="app-logo" />
                 </header>
                 <div className="input-area-wrapper">
                     <InputArea 
@@ -293,6 +294,7 @@ function AgriAdvisorApp({ onLogout }) {
         <div className="app-container chat-active">
             <header className="app-header"> 
                 <div className="header-content"><h1>Agri-Advisor AI</h1></div>
+                <img src={logo} alt="Agri-Advisor Logo" className="app-logo" />
             </header>
             <ChatInterface messages={messages} />
             <div className="chat-input-section">

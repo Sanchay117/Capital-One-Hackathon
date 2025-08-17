@@ -34,7 +34,6 @@ body {
   transition: all 0.5s ease-in-out;
 }
 
-/* --- CUSTOM LANGUAGE SELECTOR STYLES --- */
 .language-selector {
     position: relative;
     z-index: 10;
@@ -96,7 +95,6 @@ body {
   color: #a5d6a7;
 }
 
-/* --- STATE 1: Inactive Chat (Landing Page) --- */
 .app-container.chat-inactive {
   justify-content: center;
   align-items: center;
@@ -107,11 +105,23 @@ body {
     width: 100%;
 }
 
-/* .chat-inactive .language-selector {
+.app-logo {
     position: absolute;
+    height: 40px;     
+    width: auto;     
+    z-index: 20;    
+}
+
+.chat-inactive .app-logo {
     top: 30px;
     right: 30px;
-} */
+}
+
+.chat-active .app-logo {
+    right: 30px;
+    top: 50%;
+    transform: translateY(-50%);
+}
 
 .chat-inactive .main-content {
   margin-bottom: 25vh;
