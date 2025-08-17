@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useGoogleLogin } from '@react-oauth/google';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
+import { ReactComponent as GoogleLogo } from '../../Assets/google.svg';
 import './Auth.css';
 
 const LoginPage = ({ onToggleView, onLoginSuccess, onGoogleSignupNeeded }) => {
@@ -66,11 +67,15 @@ const LoginPage = ({ onToggleView, onLoginSuccess, onGoogleSignupNeeded }) => {
                 {error && <p className="auth-error">{error}</p>}
 
                 <button className="google-button" onClick={() => handleGoogleLogin()}>
-                    {/* (SVG for Google logo remains the same) */}
+                    <GoogleLogo className="google-logo-svg" />
                     Continue with Google
                 </button>
 
-                <div className="divider">...</div>
+                <div className="divider">
+                    <span className="divider-line"></span>
+                    <span className="divider-text">OR</span>
+                    <span className="divider-line"></span>
+                </div>
 
                 <form className="auth-form" onSubmit={handleFormSubmit}>
                     <div className="input-group">
