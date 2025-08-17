@@ -15,7 +15,7 @@ import whisper
 from google.oauth2 import id_token
 from google.auth.transport import requests
 
-from agriadvisor.utils import get_gemini_response
+from agriadvisor.utils import generate_answer
 
 _whisper_model = whisper.load_model("medium")
 
@@ -103,7 +103,7 @@ class MessageCreateView(generics.GenericAPIView):
 
         # 2. Get the answer from RAG agent
         try:
-            response_text = get_gemini_response(prompt, language=input_language)
+            response_text = generate_answer(prompt, language=input_language)
         except Exception as e:
             print(f"Error from RAG agent: {e}")
             response_text = "Sorry, I encountered an error. Please try again."

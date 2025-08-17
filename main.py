@@ -25,6 +25,8 @@ from sentence_transformers import SentenceTransformer, CrossEncoder
 from rank_bm25 import BM25Okapi
 from google import genai  # google-genai SDK
 
+#TODO: add lang prompts
+
 # ---------- Config ----------
 EMB_MODEL = "all-MiniLM-L6-v2"
 RERANK_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
