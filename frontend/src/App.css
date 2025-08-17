@@ -15,7 +15,6 @@ body {
   background-color: #1a1a1a;
 }
 
-/* --- Base App Structure --- */
 .app-container {
   position: relative; 
   height: 100%; 
@@ -105,23 +104,26 @@ body {
     width: 100%;
 }
 
+.app-title-group {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px; 
+}
+
 .app-logo {
-    position: absolute;
-    height: 40px;     
-    width: auto;     
-    z-index: 20;    
+    width: auto;      
+    z-index: 1; 
 }
 
 .chat-inactive .app-logo {
-    top: 30px;
-    right: 30px;
+    height: 75px; 
 }
 
 .chat-active .app-logo {
-    right: 30px;
-    top: 50%;
-    transform: translateY(-50%);
+    height: 50px;
 }
+
 
 .chat-inactive .main-content {
   margin-bottom: 25vh;
@@ -151,7 +153,6 @@ body {
   margin-bottom: 2rem;
 }
 
-/* --- STATE 2: Active Chat --- */
 .chat-active .app-header {
   order: 1; 
   position: relative;
@@ -159,16 +160,10 @@ body {
   width: 100%;
   box-sizing: border-box;
   display: flex;
-  justify-content: center;
+  justify-content: center; 
   align-items: center;
   flex-shrink: 0;
 }
-
-/* .chat-active .language-selector {
-    position: absolute;
-    top: 20px;
-    right: 30px;
-} */
 
 .chat-active .header-content h1 {
   font-size: 1.5rem;

@@ -263,10 +263,12 @@ function AgriAdvisorApp({ onLogout }) {
             <main className="main-content">
                 <header className="app-header"> 
                     <div className="header-content">
-                        <h1>Agri-Advisor AI</h1>
+                        <div className="app-title-group">
+                            <img src={logo} alt="Agri-Advisor Logo" className="app-logo" />
+                            <h1>Agri-Advisor AI</h1>
+                        </div>
                         <p>{currentTranslation.subtitle}</p>
                     </div>
-                    <img src={logo} alt="Agri-Advisor Logo" className="app-logo" />
                 </header>
                 <div className="input-area-wrapper">
                     <InputArea 
@@ -293,8 +295,12 @@ function AgriAdvisorApp({ onLogout }) {
     const renderActiveChat = () => (
         <div className="app-container chat-active">
             <header className="app-header"> 
-                <div className="header-content"><h1>Agri-Advisor AI</h1></div>
-                <img src={logo} alt="Agri-Advisor Logo" className="app-logo" />
+                <div className="header-content">
+                    <div className="app-title-group">
+                        <img src={logo} alt="Agri-Advisor Logo" className="app-logo" />
+                        <h1>Agri-Advisor AI</h1>
+                    </div>
+                </div>
             </header>
             <ChatInterface messages={messages} />
             <div className="chat-input-section">
