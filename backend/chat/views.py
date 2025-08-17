@@ -8,15 +8,16 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
 
-
-
-from google.cloud import speech
 import os
+import tempfile
+import whisper
 
 from google.oauth2 import id_token
 from google.auth.transport import requests
 
-# from .agent import generate_answer
+from agriadvisor.utils import get_gemini_response
+
+_whisper_model = whisper.load_model("medium")
 
 class RegisterView(generics.CreateAPIView):
     queryset = CustomUser.objects.all()
@@ -32,7 +33,6 @@ class GoogleLoginView(generics.GenericAPIView):
             return Response({'error': 'Google token not provided.'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            # Verify the token with Google's servers
             idinfo = id_token.verify_oauth2_token(token, requests.Request(), settings.GOOGLE_CLIENT_ID)
             email = idinfo['email']
             google_id = idinfo['sub']
@@ -66,7 +66,6 @@ class ChatListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        # Return all chats for the current user, most recently updated first
         return Chat.objects.filter(user=self.request.user)
     
 class ChatDetailView(generics.RetrieveDestroyAPIView):
@@ -102,9 +101,9 @@ class MessageCreateView(generics.GenericAPIView):
                 title += '...'
             chat = Chat.objects.create(user=user, title=title)
 
-        # 2. Get the answer from your RAG agent
+        # 2. Get the answer from RAG agent
         try:
-            response_text = generate_answer(prompt)
+            response_text = get_gemini_response(prompt, language=input_language)
         except Exception as e:
             print(f"Error from RAG agent: {e}")
             response_text = "Sorry, I encountered an error. Please try again."
@@ -128,36 +127,37 @@ from django.utils.decorators import method_decorator
 class TranscribeAudioView(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
 
-def post(self, request, *args, **kwargs):
-    if 'audio' not in request.FILES:
-        return Response({'error': 'No audio file provided.'}, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request, *args, **kwargs):
+        if 'audio' not in request.FILES:
+            return Response({'error': 'No audio file provided.'}, status=status.HTTP_400_BAD_REQUEST)
 
-    audio_file = request.FILES['audio']
-    client = speech.SpeechClient()
-    audio = speech.RecognitionAudio(content=audio_file.read())
+        audio_file = request.FILES['audio']
+        # Get the language from the request, default to 'en' if not provided
+        language = request.data.get('language', 'en')
+        tmp_path = None 
 
-    config = speech.RecognitionConfig(
-        encoding=speech.RecognitionConfig.AudioEncoding.WEBM_OPUS,
-        sample_rate_hertz=48000,
-        language_code="en-US", # A fallback
-        alternative_language_codes=["en-IN", "hi-IN", "ta-IN", "te-IN", "kn-IN", "mr-IN", "pa-IN", "bn-IN", "gu-IN", "ur-IN", "ml-IN", "or-IN"],
-        enable_automatic_punctuation=True,
-    )
+        # Save the uploaded file to a temporary file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as tmp:
+            for chunk in audio_file.chunks():
+                tmp.write(chunk)
+            tmp_path = tmp.name
 
-    try:
-        response = client.recognize(config=config, audio=audio)
+        try:
+            result = _whisper_model.transcribe(tmp_path, language=language, fp16=False)
+            text = result.get("text", "").strip()            
+            detected_language = result.get("language", "en")
+
+            return Response({'text': text, 'language': detected_language})
+
+        except Exception as e:
+            print(f"Error during Whisper transcription: {e}")
+            return Response({'error': 'Failed to process audio.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
-        if response.results:
-            best_alternative = response.results[0].alternatives[0]
-            transcription = best_alternative.transcript
-            detected_language = response.results[0].language_code
-            return Response({'text': transcription, 'language': detected_language})
-        else:
-            return Response({'text': "Sorry, I couldn't understand that."})
+        finally:
+            # Clean up the temporary file
+            if tmp_path and os.path.exists(tmp_path):
+                os.remove(tmp_path)
 
-    except Exception as e:
-        print(f"Error calling Google Speech API: {e}")
-        return Response({'error': 'Failed to process audio.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 class UserProfileUpdateView(generics.UpdateAPIView):
     serializer_class = UserProfileSerializer
