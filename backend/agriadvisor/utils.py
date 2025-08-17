@@ -482,7 +482,6 @@ def build_prompt(evidence, user_query, signals):
 def grounded_answer(q: str) -> str:
     signals, idxs = hybrid_search(q)
 
-    # Ask for missing critical info for sowing intent
     if ASK_FOR_MISSING_SLOTS and signals["intent"] == "sowing_window" and (signals["state"] is None or signals["month"] is None):
         missing = []
         if signals["state"] is None: missing.append("state")
@@ -516,7 +515,6 @@ def grounded_answer(q: str) -> str:
         text = f"(Model error: {e})\n\nHere are relevant sources:\n" + \
                "\n".join(f"- {e['source']}" for e in evidence)
 
-    # Always append a clean 'Sources' section (idempotent if model already did)
     srcs = "\n".join([f"- {e['source']}" for e in evidence])
     if "Sources" not in text:
         text += "\n\nSources:\n" + srcs

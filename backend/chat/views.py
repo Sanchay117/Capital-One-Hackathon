@@ -5,8 +5,6 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import UserSerializer, RegisterSerializer, ChatListSerializer, ChatDetailSerializer, UserProfileSerializer
 from .models import CustomUser, Chat, ChatMessage
 from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status, permissions
 
 import os
 import tempfile

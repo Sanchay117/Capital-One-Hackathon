@@ -24,7 +24,6 @@ urlpatterns = [
     path('messages/', MessageCreateView.as_view(), name='create-message'),
 
     # --- Audio Transcription Endpoint ---
-    # THE FIX: Corrected .as_Vew() to .as_view()
     path('transcribe/', TranscribeAudioView.as_view(), name='transcribe-audio'),
 
     path('profile/language/', UserProfileUpdateView.as_view(), name='update-language'),
