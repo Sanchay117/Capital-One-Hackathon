@@ -25,6 +25,24 @@
   text-align: center;
 }
 
+.profile-menu .input-group {
+    width: 100%;
+}
+
+.profile-menu .input-group label {
+    display: none; 
+}
+
+.profile-menu .input-group select {
+    background: rgba(255, 255, 255, 0.1); 
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.profile-menu-divider {
+    height: 1px;
+    background-color: rgba(255, 255, 255, 0.1);
+    margin: 5px 10px;
+}
 .auth-title {
   font-size: 2.2rem;
   font-weight: 700;

@@ -89,10 +89,8 @@ const keyboards = {
   ]
 };
 
-const OnScreenKeyboard = ({ onKeyPress }) => {
-  const [language, setLanguage] = useState('en');
+const OnScreenKeyboard = ({ onKeyPress, currentLanguage, onLanguageChange }) => {
 
-  // Helper to add special classes for styling
   const getKeyClassName = (key) => {
     if (key === 'Backspace' || key === 'Enter') return 'key key-wide key-functional';
     if (key === ' ') return 'key key-space';
@@ -102,22 +100,23 @@ const OnScreenKeyboard = ({ onKeyPress }) => {
   return (
     <div className="keyboard">
       <div className="language-switcher">
-        <button onClick={() => setLanguage('en')} className={language === 'en' ? 'active' : ''}>English</button>
-        <button onClick={() => setLanguage('hi')} className={language === 'hi' ? 'active' : ''}>हिंदी</button>
-        <button onClick={() => setLanguage('mr')} className={language === 'mr' ? 'active' : ''}>मराठी</button>
-        <button onClick={() => setLanguage('ta')} className={language === 'ta' ? 'active' : ''}>தமிழ்</button>
-        <button onClick={() => setLanguage('te')} className={language === 'te' ? 'active' : ''}>తెలుగు</button>
-        <button onClick={() => setLanguage('bn')} className={language === 'bn' ? 'active' : ''}>বাংলা</button>
-        <button onClick={() => setLanguage('gu')} className={language === 'gu' ? 'active' : ''}>ગુજરાતી</button>
-        <button onClick={() => setLanguage('kn')} className={language === 'kn' ? 'active' : ''}>ಕನ್ನಡ</button>
-        <button onClick={() => setLanguage('pa')} className={language === 'pa' ? 'active' : ''}>ਪੰਜਾਬੀ</button>
-        {/* NEW BUTTONS ADDED */}
-        <button onClick={() => setLanguage('ur')} className={language === 'ur' ? 'active' : ''}>اردو</button>
-        <button onClick={() => setLanguage('ml')} className={language === 'ml' ? 'active' : ''}>മലയാളം</button>
-        <button onClick={() => setLanguage('or')} className={language === 'or' ? 'active' : ''}>ଓଡ଼ିଆ</button>
+        {/* THE FIX: Buttons now call the onLanguageChange prop passed from the parent */}
+        <button onClick={() => onLanguageChange('en')} className={currentLanguage === 'en' ? 'active' : ''}>English</button>
+        <button onClick={() => onLanguageChange('hi')} className={currentLanguage === 'hi' ? 'active' : ''}>हिंदी</button>
+        <button onClick={() => onLanguageChange('mr')} className={currentLanguage === 'mr' ? 'active' : ''}>मराठी</button>
+        <button onClick={() => onLanguageChange('ta')} className={currentLanguage === 'ta' ? 'active' : ''}>தமிழ்</button>
+        <button onClick={() => onLanguageChange('te')} className={currentLanguage === 'te' ? 'active' : ''}>తెలుగు</button>
+        <button onClick={() => onLanguageChange('bn')} className={currentLanguage === 'bn' ? 'active' : ''}>বাংলা</button>
+        <button onClick={() => onLanguageChange('gu')} className={currentLanguage === 'gu' ? 'active' : ''}>ગુજરાતી</button>
+        <button onClick={() => onLanguageChange('kn')} className={currentLanguage === 'kn' ? 'active' : ''}>ಕನ್ನಡ</button>
+        <button onClick={() => onLanguageChange('pa')} className={currentLanguage === 'pa' ? 'active' : ''}>ਪੰਜਾਬੀ</button>
+        <button onClick={() => onLanguageChange('ur')} className={currentLanguage === 'ur' ? 'active' : ''}>اردو</button>
+        <button onClick={() => onLanguageChange('ml')} className={currentLanguage === 'ml' ? 'active' : ''}>മലയാളം</button>
+        <button onClick={() => onLanguageChange('or')} className={currentLanguage === 'or' ? 'active' : ''}>ଓଡ଼ିଆ</button>
       </div>
       <div className="keyboard-layout">
-        {keyboards[language].map((row, i) => (
+        {/* THE FIX: Use the currentLanguage prop to select the correct keyboard layout */}
+        {(keyboards[currentLanguage] || keyboards.en).map((row, i) => (
           <div key={i} className="keyboard-row">
             {row.map(key => (
               <button key={key} onClick={() => onKeyPress(key)} className={getKeyClassName(key)}>

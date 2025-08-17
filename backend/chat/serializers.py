@@ -44,3 +44,8 @@ class ChatDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Chat
         fields = ('id', 'user', 'title', 'created_at', 'updated_at', 'messages')
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ('preferred_language',)

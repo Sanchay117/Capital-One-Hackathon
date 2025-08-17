@@ -11,6 +11,8 @@ export const translations = {
     tooltipAudio: "Use Audio",
     tooltipKeyboard: "On-screen Keyboard",
     tooltipSend: "Send",
+    changeLanguage: "Change Language",
+    confirm: "Confirm",
   },
   // --- HINDI ---
   hi: {
@@ -24,6 +26,8 @@ export const translations = {
     tooltipAudio: "ऑडियो का प्रयोग करें",
     tooltipKeyboard: "ऑन-स्क्रीन कीबोर्ड",
     tooltipSend: "भेजें",
+    changeLanguage: "भाषा बदलें",
+    confirm: "पुष्टि करें",
   },
   // --- MARATHI ---
   mr: {
@@ -37,6 +41,8 @@ export const translations = {
     tooltipAudio: "ऑडिओ वापरा",
     tooltipKeyboard: "ऑन-स्क्रीन कीबोर्ड",
     tooltipSend: "पाठवा",
+    changeLanguage: "भाषा बदला",
+    confirm: "पुष्टी करा",
   },
   // --- TAMIL ---
   ta: {
@@ -50,6 +56,8 @@ export const translations = {
     tooltipAudio: "ஆடியோவைப் பயன்படுத்து",
     tooltipKeyboard: "திரை விசைப்பலகை",
     tooltipSend: "அனுப்பு",
+    changeLanguage: "மொழியை மாற்று",
+    confirm: "உறுதிப்படுத்தவும்",
   },
   // --- TELUGU ---
   te: {
@@ -63,6 +71,8 @@ export const translations = {
     tooltipAudio: "ఆడియోను ఉపయోగించండి",
     tooltipKeyboard: "ఆన్-స్క్రీన్ కీబోర్డ్",
     tooltipSend: "పంపండి",
+    changeLanguage: "భాషను మార్చండి",
+    confirm: "ధృవీకరించండి",
   },
   // --- BENGALI ---
   bn: {
@@ -76,6 +86,8 @@ export const translations = {
     tooltipAudio: "অডিও ব্যবহার করুন",
     tooltipKeyboard: "অন-স্ক্রিন কীবোর্ড",
     tooltipSend: "পাঠান",
+    changeLanguage: "ভাষা পরিবর্তন করুন",
+    confirm: "নিশ্চিত করুন",
   },
   // --- GUJARATI ---
   gu: {
@@ -89,6 +101,8 @@ export const translations = {
     tooltipAudio: "ઓડિયોનો ઉપયોગ કરો",
     tooltipKeyboard: "ઓન-સ્ક્રીન કીબોર્ડ",
     tooltipSend: "મોકલો",
+    changeLanguage: "ભાષા બદલો",
+    confirm: "પુષ્ટિ કરો",
   },
   // --- KANNADA ---
   kn: {
@@ -102,6 +116,8 @@ export const translations = {
     tooltipAudio: "ಆಡಿಯೋ ಬಳಸಿ",
     tooltipKeyboard: "ಆನ್-ಸ್ಕ್ರೀನ್ ಕೀಬೋರ್ಡ್",
     tooltipSend: "ಕಳುಹಿಸು",
+    changeLanguage: "ಭಾಷೆ ಬದಲಾಯಿಸಿ",
+    confirm: "ದೃಢೀಕರಿಸಿ",
   },
   // --- PUNJABI ---
   pa: {
@@ -113,8 +129,10 @@ export const translations = {
     userProfile: "ਉਪਭੋਗਤਾ ਪ੍ਰੋਫ਼ਾਈਲ",
     logout: "ਲਾਗ ਆਉਟ",
     tooltipAudio: "ਆਡੀਓ ਦੀ ਵਰਤੋਂ ਕਰੋ",
-    tooltipKeyboard: "ਆਨ-ਸਕ੍ਰੀਨ ਕੀਬੋਰਡ",
+    tooltipKeyboard: "ਆਨ-ਸਕ੍ਰੀਨ ਕੀਬોર્ਡ",
     tooltipSend: "ਭੇਜੋ",
+    changeLanguage: "ਭਾਸ਼ਾ ਬਦਲੋ",
+    confirm: "ਪੁਸ਼ਟੀ ਕਰੋ",
   },
   // --- URDU ---
   ur: {
@@ -128,6 +146,8 @@ export const translations = {
     tooltipAudio: "آڈیو استعمال کریں",
     tooltipKeyboard: "آن اسکرین کی بورڈ",
     tooltipSend: "بھیجیں",
+    changeLanguage: "زبان تبدیل کریں",
+    confirm: "تصدیق کریں",
   },
   // --- MALAYALAM ---
   ml: {
@@ -141,6 +161,8 @@ export const translations = {
     tooltipAudio: "ഓഡിയോ ഉപയോഗിക്കുക",
     tooltipKeyboard: "ഓൺ-സ്ക്രീൻ കീബോർഡ്",
     tooltipSend: "അയയ്ക്കുക",
+    changeLanguage: "ഭാഷ മാറ്റുക",
+    confirm: "സ്ഥിരീകരിക്കുക",
   },
   // --- ODIA ---
   or: {
@@ -154,5 +176,7 @@ export const translations = {
     tooltipAudio: "ଅଡିଓ ବ୍ୟବହାର କରନ୍ତୁ",
     tooltipKeyboard: "ଅନ୍-ସ୍କ୍ରିନ୍ କିବୋର୍ଡ୍",
     tooltipSend: "ପଠାନ୍ତୁ",
+    changeLanguage: "ଭାଷା ବଦଳାନ୍ତୁ",
+    confirm: "ନିଶ୍ଚିତ କରନ୍ତୁ",
   },
 };

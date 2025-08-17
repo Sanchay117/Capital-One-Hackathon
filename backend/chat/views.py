@@ -2,11 +2,12 @@ from django.conf import settings
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import UserSerializer, RegisterSerializer, ChatListSerializer, ChatDetailSerializer
+from .serializers import UserSerializer, RegisterSerializer, ChatListSerializer, ChatDetailSerializer, UserProfileSerializer
 from .models import CustomUser, Chat, ChatMessage
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
+
 
 
 from google.cloud import speech
@@ -157,3 +158,10 @@ def post(self, request, *args, **kwargs):
     except Exception as e:
         print(f"Error calling Google Speech API: {e}")
         return Response({'error': 'Failed to process audio.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+class UserProfileUpdateView(generics.UpdateAPIView):
+    serializer_class = UserProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user

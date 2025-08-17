@@ -6,7 +6,7 @@ from .views import (
     ChatDetailView,
     MessageCreateView,
     TranscribeAudioView,
-
+    UserProfileUpdateView
     )
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 urlpatterns = [
@@ -26,5 +26,7 @@ urlpatterns = [
     # --- Audio Transcription Endpoint ---
     # THE FIX: Corrected .as_Vew() to .as_view()
     path('transcribe/', TranscribeAudioView.as_view(), name='transcribe-audio'),
+
+    path('profile/language/', UserProfileUpdateView.as_view(), name='update-language'),
 
 ]

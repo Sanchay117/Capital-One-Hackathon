@@ -10,7 +10,6 @@ import { FiMenu } from 'react-icons/fi';
 
 function AgriAdvisorApp({ onLogout }) {
     // --- STATE MANAGEMENT ---
-    // THE FIX: Sidebar now starts in the 'open' state by default.
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const profileMenuRef = useRef(null);
@@ -35,7 +34,7 @@ function AgriAdvisorApp({ onLogout }) {
             });
             if (response.status === 401) {
                 onLogout();
-                return null; // Return null to indicate failure
+                return null; 
             }
             return await response.json();
         } catch (err) {
@@ -49,21 +48,33 @@ function AgriAdvisorApp({ onLogout }) {
             const historyData = await fetchChatHistory();
             if (historyData) {
                 setChatHistory(historyData);
-                // Automatically load the most recent chat if one exists
                 if (historyData.length > 0) {
                     await loadChat(historyData[0].id);
                 } else {
-                    // If no history, start with the new chat page
                     setIsChatActive(false);
                 }
             }
         };
         initializeUserSession();
-    }, []); // Run only once on initial component mount
+    }, [onLogout]); 
 
-    const handleLanguageChange = (lang) => {
+    const handleLanguageChange = async (lang) => {
+        const token = localStorage.getItem('accessToken');
         setGlobalLanguage(lang);
         localStorage.setItem('userLanguage', lang);
+
+        try {
+            await fetch('http://127.0.0.1:8000/api/profile/language/', {
+                method: 'PATCH', 
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({ preferred_language: lang }),
+            });
+        } catch (err) {
+            console.error("Failed to save language preference:", err);
+        }
     };
 
     const loadChat = async (chatId) => {
@@ -155,8 +166,32 @@ function AgriAdvisorApp({ onLogout }) {
         else if (key === 'Backspace') setInput(input.slice(0, -1));
         else setInput(input + key);
     };
+    const handleDeleteChat = async (chatId) => {
+        const token = localStorage.getItem('accessToken');
+        try {
+            const response = await fetch(`http://127.0.0.1:8000/api/chats/${chatId}/`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            if (response.status === 401) { onLogout(); return; }
+            if (!response.ok) { throw new Error('Failed to delete chat.'); }
+
+            setChatHistory(prev => prev.filter(chat => chat.id !== chatId));
+
+            if (activeChat && activeChat.id === chatId) {
+                handleNewChat();
+            }
+
+        } catch (err) {
+            console.error("Error deleting chat:", err);
+            alert("Could not delete the chat. Please try again.");
+        }
+    };
     
-const startRecording = () => {
+    const startRecording = () => {
         navigator.mediaDevices.getUserMedia({ audio: true })
             .then(stream => {
                 const recorder = new MediaRecorder(stream);
@@ -231,7 +266,6 @@ const startRecording = () => {
                         <h1>Agri-Advisor AI</h1>
                         <p>{currentTranslation.subtitle}</p>
                     </div>
-                    <LanguageSelector setGlobalLanguage={handleLanguageChange} />
                 </header>
                 <div className="input-area-wrapper">
                     <InputArea 
@@ -245,7 +279,13 @@ const startRecording = () => {
                     />
                 </div>
             </main>
-            {showKeyboard && <OnScreenKeyboard onKeyPress={handleKeyPress} />}
+            {showKeyboard && 
+                <OnScreenKeyboard 
+                    onKeyPress={handleKeyPress} 
+                    currentLanguage={globalLanguage}
+                    onLanguageChange={handleLanguageChange}
+                />
+            }
         </div>
     );
 
@@ -253,11 +293,16 @@ const startRecording = () => {
         <div className="app-container chat-active">
             <header className="app-header"> 
                 <div className="header-content"><h1>Agri-Advisor AI</h1></div>
-                <LanguageSelector setGlobalLanguage={handleLanguageChange} />
             </header>
             <ChatInterface messages={messages} />
             <div className="chat-input-section">
-                {showKeyboard && <OnScreenKeyboard onKeyPress={handleKeyPress} />}
+                {showKeyboard && 
+                    <OnScreenKeyboard 
+                        onKeyPress={handleKeyPress}
+                        currentLanguage={globalLanguage}
+                        onLanguageChange={handleLanguageChange}
+                    />
+                }
                 <div className="input-area-wrapper">
                     <InputArea 
                         {...{input, setInput, isRecording, isTranscribing, handleAudioClick}}
@@ -292,7 +337,10 @@ const startRecording = () => {
                 isChatActive={isChatActive}
                 onLogout={onLogout}
                 onLoadChat={loadChat}
-                translations={currentTranslation} // <-- THE FIX: Pass the current translation object
+                onDeleteChat={handleDeleteChat}
+                translations={currentTranslation} 
+                onLanguageChange={handleLanguageChange}
+                globalLanguage={globalLanguage}
                 ref={profileMenuRef}
             />
 

@@ -107,11 +107,11 @@ body {
     width: 100%;
 }
 
-.chat-inactive .language-selector {
+/* .chat-inactive .language-selector {
     position: absolute;
     top: 30px;
     right: 30px;
-}
+} */
 
 .chat-inactive .main-content {
   margin-bottom: 25vh;
@@ -154,11 +154,11 @@ body {
   flex-shrink: 0;
 }
 
-.chat-active .language-selector {
+/* .chat-active .language-selector {
     position: absolute;
     top: 20px;
     right: 30px;
-}
+} */
 
 .chat-active .header-content h1 {
   font-size: 1.5rem;
@@ -371,6 +371,111 @@ body {
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .chat-history-item:hover { background-color: #3a3a3a; }
+
+/* Add this after your .chat-history-item:hover rule */
+
+.chat-history-item {
+    /* THE FIX: Add flex properties to align title and delete button */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chat-item-title {
+    display: flex;
+    align-items: center;
+    /* Allow the title to shrink to make room for the button */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.delete-chat-button {
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 5px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.language-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; 
+}
+
+.language-modal-content {
+    background-color: #2a2a2a;
+    color: #fff;
+    padding: 30px;
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px Bto 30px rgba(0,0,0,0.3);
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.language-modal-content h3 {
+    margin-top: 0;
+    margin-bottom: 25px;
+    font-weight: 600;
+}
+
+.language-modal-select {
+    width: 100%;
+    padding: 12px 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 1rem;
+    margin-bottom: 25px;
+}
+
+.language-modal-select option {
+    background-color: #333;
+}
+
+.language-modal-confirm-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(90deg, #4CAF50, #2E7D32);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.language-modal-confirm-btn:hover {
+    transform: translateY(-2px);
+}
+
+.chat-history-item:hover .delete-chat-button {
+    opacity: 1;
+}
+
+.delete-chat-button:hover {
+    color: #ff5555; /* Red color on hover */
+}
+
 .chat-history-item .chat-icon {
     margin-right: 15px; font-size: 1rem; color: #a0a0a0; flex-shrink: 0;
 }
@@ -399,9 +504,15 @@ body {
     display: flex; align-items: center; width: 100%; padding: 12px 15px;
     background: none; border: none; color: #fff; cursor: pointer; font-size: 0.9rem;
     text-align: left; border-radius: 5px; transition: background-color 0.2s;
+    justify-content: space-between;
 }
 .profile-menu-item:hover { background-color: #3a3a3a; }
 .profile-menu-item span { margin-left: 15px; }
+.profile-menu-divider {
+    height: 1px;
+    background-color: rgba(255, 255, 255, 0.1);
+    margin: 5px 10px; /* Adds vertical and horizontal spacing */
+}
 
 .main-content-area {
     width: 100%; height: 100%; position: relative; 
