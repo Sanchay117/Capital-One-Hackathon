@@ -4,24 +4,14 @@ Django settings for agriadvisor project.
 import os
 from pathlib import Path
 from datetime import timedelta
-# from dotenv import load_dotenv
 
-# THE FIX: Load environment variables at the very top.
-# load_dotenv()
-
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-default-key-for-dev')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
-
-
-# Application definition
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -34,13 +24,12 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
     "corsheaders",
-    # Your Apps
+    # My Apps
     "chat",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    # THE FIX: CorsMiddleware should be as high as possible.
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     'django.middleware.common.CommonMiddleware',
@@ -70,15 +59,14 @@ TEMPLATES = [
 WSGI_APPLICATION = 'agriadvisor.wsgi.application'
 
 
-# THE FIX: Database configured for PostgreSQL
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'capital1_db',
-        'USER': 'postgres',
-        'PASSWORD': 'db_pwd',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'NAME': os.getenv('DJANGO_DB_NAME', 'capital1_db'),
+        'USER': os.getenv('DJANGO_DB_USER', 'django_user'),
+        'PASSWORD': os.getenv('DJANGO_DB_PASSWORD', 'strongpassword'),
+        'HOST': os.getenv('DJANGO_DB_HOST', 'localhost'),
+        'PORT': os.getenv('DJANGO_DB_PORT', '5432'),
     }
 }
 
@@ -103,7 +91,6 @@ STATIC_URL = 'static/'
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# THE FIX: This is the critical line that tells Django to use your CustomUser model.
 AUTH_USER_MODEL = 'chat.CustomUser'
 
 # CORS SETTINGS
@@ -129,5 +116,4 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-# THE FIX: Add your Google Client ID from your .env file
 GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
