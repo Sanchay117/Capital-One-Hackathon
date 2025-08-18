@@ -477,6 +477,11 @@ def build_prompt(evidence, user_query, signals):
 
         USER QUESTION
         {user_query}
+
+        Note:
+        - The USER QUESTION may be in any Indian language (Hindi, Bengali, Tamil, English, etc.).
+        - Your job is to first interpret the USER QUESTION correctly in English internally, then follow all the ROLE, CONSTRAINTS, and DECISION LOGIC above.
+        - Always produce the final OUTPUT in the same language as the USER QUESTION, unless explicitly asked by the user to reply in their language.
     """
 
 def grounded_answer(q: str) -> str:

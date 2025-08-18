@@ -127,12 +127,7 @@ class MessageCreateView(generics.GenericAPIView):
 
         # 2. Get the answer from RAG agent
         try:
-            if input_language=="en" : response_text = generate_answer(prompt)
-            else:
-                translation = translate_to_english_google(prompt,input_language)
-                eng_prompt = translation["translated"]
-                response_text = generate_answer(eng_prompt)
-                response_text = translate_from_english_google(response_text,input_language)
+            response_text = generate_answer(prompt)
         except Exception as e:
             print(f"Error from RAG agent: {e}")
             response_text = "Sorry, I encountered an error. Please try again."
