@@ -211,6 +211,7 @@ Capital-One-Hackathon/
 | `Django`                | REST API          |
 | `psycopg2`              | PostgreSQL driver |
 | `react`                 | Frontend UI       |
+| `googletrans`           | Translation       |
 
 ---
 

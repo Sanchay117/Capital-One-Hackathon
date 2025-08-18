@@ -60,3 +60,4 @@ python-dotenv
 sentence-transformers
 faiss-cpu
 google-genai
+googletrans==4.0.0
