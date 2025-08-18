@@ -521,7 +521,7 @@ def grounded_answer(q: str) -> str:
     return text
 
 # ---------- Public API ----------
-def generate_answer(user_query: str, language) -> str:
+def generate_answer(user_query: str) -> str:
     return grounded_answer(user_query)
 
 # ---------- CLI ----------
