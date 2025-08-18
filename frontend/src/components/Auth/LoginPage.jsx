@@ -35,13 +35,22 @@ const LoginPage = ({ onToggleView, onLoginSuccess, onGoogleSignupNeeded }) => {
         onSuccess: async (tokenResponse) => {
             setError('');
             try {
-                const response = await fetch('http://127.0.0.1:8000/api/login/google/', {
+                const googleResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                    headers: { 'Authorization': `Bearer ${tokenResponse.access_token}` },
+                });
+                
+                if (!googleResponse.ok) {
+                    throw new Error('Failed to fetch user info from Google.');
+                }
+                const userInfo = await googleResponse.json();
+
+                const backendResponse = await fetch('http://127.0.0.1:8000/api/login/google/', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ token: tokenResponse.access_token }),
+                    body: JSON.stringify({ access_token: tokenResponse.access_token }),
                 });
-                const data = await response.json();
-                if (!response.ok) {
+                const data = await backendResponse.json();
+                if (!backendResponse.ok) {
                     throw new Error(data.error || 'Google login failed.');
                 }
                 

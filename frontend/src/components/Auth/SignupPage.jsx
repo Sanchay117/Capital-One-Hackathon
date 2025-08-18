@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
+import { useGoogleLogin } from '@react-oauth/google';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 import LanguageSelection from './LanguageSelection';
 import { ReactComponent as GoogleLogo } from '../../Assets/google.svg';
 import './Auth.css';
 
-const SignupPage = ({ onToggleView, onLoginSuccess }) => {
+const SignupPage = ({ onToggleView, onLoginSuccess, onGoogleSignupNeeded }) => {
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -13,6 +14,34 @@ const SignupPage = ({ onToggleView, onLoginSuccess }) => {
     const [error, setError] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+    const handleGoogleLogin = useGoogleLogin({
+        onSuccess: async (tokenResponse) => {
+            setError('');
+            try {
+                const backendResponse = await fetch('http://127.0.0.1:8000/api/login/google/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ access_token: tokenResponse.access_token }),
+                });
+                const data = await backendResponse.json();
+                if (!backendResponse.ok) {
+                    throw new Error(data.error || 'Google login failed.');
+                }
+                
+                if (data.is_new_user) {
+                    onGoogleSignupNeeded(data.user_data);
+                } else {
+                    onLoginSuccess(data);
+                }
+            } catch (err) {
+                setError(err.message);
+            }
+        },
+        onError: () => {
+            setError('Google login failed. Please try again.');
+        },
+    });
 
     const handleSignupSubmit = async (event) => {
         event.preventDefault();
@@ -52,7 +81,7 @@ const SignupPage = ({ onToggleView, onLoginSuccess }) => {
                 <h1 className="auth-title">Create Your Account</h1>
                 {error && <p className="auth-error">{error}</p>}
                 
-                <button className="google-button">
+                <button className="google-button" onClick={() => handleGoogleLogin()}>
                     <GoogleLogo className="google-logo-svg" />
                     Sign Up with Google
                 </button>

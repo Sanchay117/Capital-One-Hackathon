@@ -1,7 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 
-// The ChatInterface now renders a structured conversation log.
 const ChatInterface = ({ messages }) => {
   const endOfMessagesRef = useRef(null);
 
@@ -15,7 +14,6 @@ const ChatInterface = ({ messages }) => {
 
   return (
     <div className="chat-interface">
-      {/* We now map over each "turn" in the conversation */}
       {messages.map((turn, index) => (
         <div key={index} className="chat-turn">
           {/* Section 1: The User's Prompt */}

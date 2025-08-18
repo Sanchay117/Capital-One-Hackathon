@@ -9,9 +9,9 @@ from rest_framework.views import APIView
 import os
 import tempfile
 import whisper
+import requests
 
-from google.oauth2 import id_token
-from google.auth.transport import requests
+from deep_translator import GoogleTranslator
 
 from agriadvisor.utils import generate_answer
 
@@ -26,12 +26,16 @@ class GoogleLoginView(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request, *args, **kwargs):
-        token = request.data.get('token')
-        if not token:
-            return Response({'error': 'Google token not provided.'}, status=status.HTTP_400_BAD_REQUEST)
+        access_token = request.data.get('access_token')
+        if not access_token:
+            return Response({'error': 'Google access token not provided.'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            idinfo = id_token.verify_oauth2_token(token, requests.Request(), settings.GOOGLE_CLIENT_ID)
+            user_info_url = 'https://www.googleapis.com/oauth2/v3/userinfo'
+            headers = {'Authorization': f'Bearer {access_token}'}
+            google_response = requests.get(user_info_url, headers=headers)
+            google_response.raise_for_status()  
+            idinfo = google_response.json()
             email = idinfo['email']
             google_id = idinfo['sub']
 
@@ -40,7 +44,8 @@ class GoogleLoginView(generics.GenericAPIView):
                 email=email,
                 defaults={
                     'google_id': google_id,
-                    'username': email.split('@')[0] # A default username
+                    'username': idinfo.get('given_name', email.split('@')[0]),
+                    'name': idinfo.get('name', ''),
                 }
             )
 
@@ -52,11 +57,8 @@ class GoogleLoginView(generics.GenericAPIView):
                 'access': str(refresh.access_token),
                 'user': user_data
             })
-        except ValueError:
-            return Response({'error': 'Invalid Google token.'}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({'error': f'An error occurred: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+            return Response({'error': f'Invalid Google token or failed to fetch user info: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ChatListView(generics.ListAPIView):
@@ -99,11 +101,20 @@ class MessageCreateView(generics.GenericAPIView):
                 title += '...'
             chat = Chat.objects.create(user=user, title=title)
 
-        # 2. Get the answer from RAG agent
+        # 2. Get the answer from RAG agent, with translation
         try:
-            response_text = generate_answer(prompt)
+            prompt_for_model = prompt
+            if input_language != 'en':
+                prompt_for_model = GoogleTranslator(source=input_language, target='en').translate(prompt)
+
+            english_response = generate_answer(prompt_for_model)
+
+            response_text = english_response
+            if input_language != 'en':
+                response_text = GoogleTranslator(source='en', target=input_language).translate(english_response)
+
         except Exception as e:
-            print(f"Error from RAG agent: {e}")
+            print(f"Error during translation or RAG agent call: {e}")
             response_text = "Sorry, I encountered an error. Please try again."
 
         # 3. Save the new message to the database

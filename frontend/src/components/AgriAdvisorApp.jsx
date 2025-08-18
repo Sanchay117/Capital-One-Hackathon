@@ -92,8 +92,6 @@ function AgriAdvisorApp({ onLogout }) {
             }));
             setMessages(formattedMessages);
             setIsChatActive(true);
-            // THE FIX: Do NOT close the sidebar when loading a chat. The user should control this.
-            // setIsSidebarOpen(false); // This line has been removed.
         } catch (err) {
             console.error("Failed to load chat:", err);
         }
@@ -118,7 +116,7 @@ function AgriAdvisorApp({ onLogout }) {
                 body: JSON.stringify({
                     prompt: text,
                     chat_id: activeChat ? activeChat.id : null,
-                    input_type: "text", // This would be dynamic for audio
+                    input_type: "text", 
                     input_language: globalLanguage,
                 }),
             });
@@ -129,13 +127,12 @@ function AgriAdvisorApp({ onLogout }) {
             setActiveChat(data);
             setMessages(data.messages.map(msg => ({ prompt: msg.prompt_text, response: msg.response_text })));
             
-            // After sending a message, refresh the chat history to update the order and title.
             const newHistory = await fetchChatHistory();
             if (newHistory) setChatHistory(newHistory);
 
         } catch (err) {
             console.error("Error sending message:", err);
-            setMessages(prev => prev.slice(0, -1)); // Remove the temp message on error
+            setMessages(prev => prev.slice(0, -1)); 
         }
     };
     
@@ -145,7 +142,7 @@ function AgriAdvisorApp({ onLogout }) {
         setMessages([]);
         setActiveChat(null);
         setInput('');
-        setIsSidebarOpen(true); // Ensure sidebar is open for a new chat
+        setIsSidebarOpen(true); 
     };
 
     const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
@@ -328,7 +325,6 @@ function AgriAdvisorApp({ onLogout }) {
 
     return (
         <div className={`app-layout ${isSidebarOpen ? 'sidebar-open' : ''}`}>
-            {/* The open button is now only for when a user explicitly closes the sidebar */}
             {!isSidebarOpen && (
                 <button className="sidebar-open-button" onClick={toggleSidebar}>
                     <FiMenu />

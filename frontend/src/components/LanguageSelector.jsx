@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-// Language data for the dropdown
 const languages = {
     en: "English",
     hi: "हिंदी (Hindi)",
@@ -11,7 +10,6 @@ const languages = {
     gu: "ગુજરાતી (Gujarati)",
     kn: "ಕನ್ನಡ (Kannada)",
     pa: "ਪੰਜਾਬੀ (Punjabi)",
-    // NEW LANGUAGES ADDED
     ur: "اردو (Urdu)",
     ml: "മലയാളം (Malayalam)",
     or: "ଓଡ଼ିଆ (Odia)"
@@ -22,7 +20,6 @@ const LanguageSelector = ({ setGlobalLanguage }) => {
     const [selectedLanguage, setSelectedLanguage] = useState('en');
     const wrapperRef = useRef(null);
 
-    // Effect to close the dropdown if you click outside of it
     useEffect(() => {
         function handleClickOutside(event) {
             if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
@@ -38,7 +35,7 @@ const LanguageSelector = ({ setGlobalLanguage }) => {
     const handleLanguageChange = (langKey) => {
         setSelectedLanguage(langKey);
         setGlobalLanguage(langKey);
-        setIsOpen(false); // Close dropdown after selection
+        setIsOpen(false); 
     };
 
     return (

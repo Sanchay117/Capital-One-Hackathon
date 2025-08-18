@@ -10,11 +10,9 @@ const InputArea = ({
   onSendMessage, 
   toggleKeyboard,
   placeholderText,
-  // Tooltips are now passed as props for better translation management
   tooltipAudio,
   tooltipKeyboard,
   tooltipSend,
-  // State props
   isRecording,
   isTranscribing,
   handleAudioClick
@@ -25,12 +23,10 @@ const InputArea = ({
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
-      // Pass the input value directly to onSendMessage
       onSendMessage(input);
     }
   };
 
-  // This function determines what placeholder text to show based on the current state
   const getPlaceholder = () => {
     if (isRecording) return "Recording... Click stop when done.";
     if (isTranscribing) return "Transcribing audio, please wait...";
@@ -42,7 +38,6 @@ const InputArea = ({
       <button 
         className={`icon-button ${isRecording ? 'recording-pulse' : ''}`} 
         title={isRecording ? "Stop Recording" : tooltipAudio} 
-        // Disable the mic button while transcribing to prevent conflicts
         disabled={isTranscribing} 
         onClick={handleAudioClick}
       >
@@ -54,9 +49,7 @@ const InputArea = ({
         value={input}
         onChange={handleInputChange}
         onKeyPress={handleKeyPress}
-        // The placeholder is now dynamic
         placeholder={getPlaceholder()}
-        // Disable the input field while recording OR transcribing
         disabled={isRecording || isTranscribing}
       />
       
@@ -64,7 +57,6 @@ const InputArea = ({
         <img src={keyboardIcon} alt={tooltipKeyboard} />
       </button>
       
-      {/* Pass the input value directly to onSendMessage */}
       <button className="send-button" title={tooltipSend} onClick={() => onSendMessage(input)}>
         <img src={sendIcon} alt={tooltipSend} />
       </button>
