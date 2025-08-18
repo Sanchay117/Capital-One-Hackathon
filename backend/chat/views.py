@@ -10,6 +10,7 @@ import os
 import tempfile
 import whisper
 
+from deep_translator import GoogleTranslator
 from google.oauth2 import id_token
 from google.auth.transport import requests
 
@@ -99,11 +100,20 @@ class MessageCreateView(generics.GenericAPIView):
                 title += '...'
             chat = Chat.objects.create(user=user, title=title)
 
-        # 2. Get the answer from RAG agent
+        # 2. Get the answer from RAG agent, with translation
         try:
-            response_text = generate_answer(prompt)
+            prompt_for_model = prompt
+            if input_language != 'en':
+                prompt_for_model = GoogleTranslator(source=input_language, target='en').translate(prompt)
+
+            english_response = generate_answer(prompt_for_model)
+
+            response_text = english_response
+            if input_language != 'en':
+                response_text = GoogleTranslator(source='en', target=input_language).translate(english_response)
+
         except Exception as e:
-            print(f"Error from RAG agent: {e}")
+            print(f"Error during translation or RAG agent call: {e}")
             response_text = "Sorry, I encountered an error. Please try again."
 
         # 3. Save the new message to the database
