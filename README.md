@@ -5,7 +5,7 @@ Built for **offline-first** environments and **low-digital-access** users, the s
 
 ---
 
-### ⚠️ 24gb RAM and A GPU recommended for builing the index
+### ⚠️ 24GB RAM and A GPU recommended for builing the index
 
 ---
 
@@ -19,6 +19,7 @@ Built for **offline-first** environments and **low-digital-access** users, the s
     ```bash
     cd backend
     python manage.py migrate
+    python manage.py runserver
     ```
 3. **Open the web app**:
     - Frontend: `http://localhost:3000`
