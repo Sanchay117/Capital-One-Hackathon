@@ -212,8 +212,6 @@ Capital-One-Hackathon/
 | `psycopg2`              | PostgreSQL driver |
 | `react`                 | Frontend UI       |
 
-|
-
 ---
 
 ## 🌐 Data Sources
