@@ -1,3 +1,213 @@
+# Agri-Advisor – AI-Powered Agriculture Assistant
+
+A **human-aligned, multi-modal agentic AI solution** that delivers **grounded, hyper-local agricultural advice** to Indian farmers and agri-stakeholders.  
+Built for **offline-first** environments and **low-digital-access** users, the system answers questions on **crops, weather, finance, policy, and market prices** using only **publicly available datasets**.
+
+---
+
+## 🚀 Quick Start (TL;DR)
+
+1. **Build the index** (one-time):
+    ```bash
+    python index_builder.py
+    ```
+2. **Launch the backend**:
+    ```bash
+    cd backend
+    python manage.py migrate
+    ```
+3. **Open the web app**:
+    - Frontend: `http://localhost:3000`
+    - API: `http://localhost:8000/api/chat/`
+
+---
+
+## 📦 Prerequisites
+
+| Component         | Version / Notes    |
+| ----------------- | ------------------ |
+| **Python**        | 3.10+              |
+| **PostgreSQL**    | 14+                |
+| **Node.js**       | 18+ (for frontend) |
+| **macOS / Linux** | Windows untested   |
+
+---
+
+## 🔧 Installation
+
+### 1. Clone & Enter
+
+```bash
+git clone <repo-url>
+cd Capital-One-Hackathon
+```
+
+### 2. Backend (Django + Postgres)
+
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+### 3. Frontend (React)
+
+```bash
+cd ../frontend
+npm install
+```
+
+---
+
+x
+
+## ⚙️ Environment Variables
+
+Create `.env` in **project root**:
+
+```env
+# Gemini API
+GEMINI_API_KEY=your_gemini_key_here
+
+# PostgreSQL
+POSTGRES_DB=agriadvisor
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+```
+
+---
+
+## 🗃️ Database Setup
+
+```bash
+# Create DB (run once)
+createdb agriadvisor
+
+# Run migrations
+cd backend
+python manage.py migrate
+```
+
+---
+
+## 🏗️ Build the Index (One-Time)
+
+```bash
+python index_builder.py
+```
+
+-   **Input**: `data/*.jsonl` (public agri datasets)
+-   **Output**:
+    -   `artifacts/index_flatip.faiss` (FAISS vector index)
+    -   `artifacts/corpus.jsonl` (merged documents)
+
+---
+
+## 🚀 Run the Stack
+
+### Backend (Django)
+
+```bash
+cd backend
+python manage.py runserver  # http://localhost:8000
+```
+
+### Frontend (React)
+
+```bash
+cd frontend
+npm start                 # http://localhost:3000
+```
+
+---
+
+## 📡 API Endpoints
+
+| Method | Endpoint             | Description                          |
+| ------ | -------------------- | ------------------------------------ |
+| `POST` | `/api/chat/`         | Send user query, receive AI response |
+| `GET`  | `/api/chat/history/` | Retrieve conversation history        |
+
+---
+
+## 🧪 Testing
+
+```bash
+# Backend tests
+cd backend
+python manage.py test
+
+# Frontend tests
+cd frontend
+npm test
+```
+
+---
+
+## 📁 Project Structure
+
+```
+Capital-One-Hackathon/
+├── main.py              # CLI agent (standalone)
+├── index_builder.py     # FAISS index builder
+├── backend/             # Django REST API
+│   ├── manage.py
+│   ├── requirements.txt
+│   └── agriadvisor/
+├── frontend/            # React web app
+├── data/                # Public datasets (JSONL)
+├── artifacts/           # Generated index & corpus
+└── README-v2.md
+```
+
+---
+
+## 🧩 Key Dependencies
+
+| Package                 | Purpose           |
+| ----------------------- | ----------------- |
+| `faiss-cpu`             | Vector search     |
+| `sentence-transformers` | Embedding model   |
+| `google-genai`          | Gemini LLM        |
+| `Django`                | REST API          |
+| `psycopg2`              | PostgreSQL driver |
+| `react`                 | Frontend UI       |
+
+---
+
+## 🌐 Data Sources
+
+All datasets are **publicly available** and stored in `data/`.  
+Examples:
+
+-   ICRISAT district-level data
+-   Government schemes & subsidies
+-   Crop production & yield records
+-   Weather & rainfall data
+
+---
+
+## 🛠️ Troubleshooting
+
+| Issue                    | Fix                                            |
+| ------------------------ | ---------------------------------------------- |
+| `psycopg2` install fails | `brew install postgresql` (macOS)              |
+| FAISS build error        | Use `faiss-cpu` wheel: `pip install faiss-cpu` |
+| GPU OOM                  | Reduce `EMB_BATCH` in `index_builder.py`       |
+
+---
+
+## 📞 Support
+
+For issues or contributions, open a GitHub issue or contact the maintainers.
+
+---
+
+**Happy farming! 🌾**
+
 ### Datasets Used
 
 -   [Agrollm Dataset](https://www.kaggle.com/datasets/viswambhar/agrollm-data)
