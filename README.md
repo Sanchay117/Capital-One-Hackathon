@@ -134,6 +134,35 @@ npm start                 # http://localhost:3000
 | `POST` | `/api/chat/`         | Send user query, receive AI response |
 | `GET`  | `/api/chat/history/` | Retrieve conversation history        |
 
+### Authentication Endpoints
+
+| Method | Endpoint              | Description         |
+| ------ | --------------------- | ------------------- |
+| `POST` | `/api/register/`      | Register a new user |
+| `POST` | `/api/login/`         | User login          |
+| `POST` | `/api/login/refresh/` | Refresh JWT token   |
+| `POST` | `/api/login/google/`  | Google OAuth login  |
+
+### Chat Management Endpoints
+
+| Method | Endpoint             | Description               |
+| ------ | -------------------- | ------------------------- |
+| `GET`  | `/api/chats/`        | Get all chat histories    |
+| `GET`  | `/api/chats/<uuid>/` | Get specific chat details |
+
+### Messaging Endpoints
+
+| Method | Endpoint         | Description        |
+| ------ | ---------------- | ------------------ |
+| `POST` | `/api/messages/` | Create new message |
+
+### Utility Endpoints
+
+| Method | Endpoint                 | Description                     |
+| ------ | ------------------------ | ------------------------------- |
+| `POST` | `/api/transcribe/`       | Transcribe audio to text        |
+| `PUT`  | `/api/profile/language/` | Update user language preference |
+
 ---
 
 ## 🧪 Testing
@@ -159,10 +188,14 @@ Capital-One-Hackathon/
 ├── backend/             # Django REST API
 │   ├── manage.py
 │   ├── requirements.txt
-│   └── agriadvisor/
+│   ├── agriadvisor/
+│   └── chat/
 ├── frontend/            # React web app
+│   ├── public/
+│   ├── src/
 ├── data/                # Public datasets (JSONL)
 ├── artifacts/           # Generated index & corpus
+├── scripts/             # Generating corpus from websites and datasets
 └── README.md
 ```
 
@@ -178,6 +211,8 @@ Capital-One-Hackathon/
 | `Django`                | REST API          |
 | `psycopg2`              | PostgreSQL driver |
 | `react`                 | Frontend UI       |
+
+|
 
 ---
 
