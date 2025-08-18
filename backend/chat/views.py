@@ -17,32 +17,6 @@ from agriadvisor.utils import generate_answer
 
 _whisper_model = whisper.load_model("medium")
 
-from google.cloud import translate_v2 as translate  # v2 is stable for simple use
-
-client = translate.Client()
-
-def translate_to_english_google(text: str, src: str) -> dict:
-    # src should be ISO-639-1, e.g. "fr", "es", "de", "hi"
-    res = client.translate(text, source_language=src, target_language="en")
-    return {"source_language": res.get("detectedSourceLanguage") or src, "translated": res.get("translatedText")}
-
-def translate_from_english_google(text: str, target: str) -> dict:
-    """
-    Translate from English to the provided target language.
-    
-    Args:
-        text (str): English text to translate
-        target (str): Target language code (ISO-639-1, e.g., 'fr', 'es', 'de', 'hi')
-    
-    Returns:
-        dict: { "source_language": "en", "translated": <translated text> }
-    """
-    res = client.translate(text, source_language="en", target_language=target)
-    return {
-        "source_language": "en",
-        "translated": res.get("translatedText")
-    }
-
 class RegisterView(generics.CreateAPIView):
     queryset = CustomUser.objects.all()
     permission_classes = (permissions.AllowAny,)
