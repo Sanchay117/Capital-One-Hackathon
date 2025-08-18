@@ -38,7 +38,6 @@ const InputArea = ({
       <button 
         className={`icon-button ${isRecording ? 'recording-pulse' : ''}`} 
         title={isRecording ? "Stop Recording" : tooltipAudio} 
-        // Disable the mic button while transcribing to prevent conflicts
         disabled={isTranscribing} 
         onClick={handleAudioClick}
       >
