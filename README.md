@@ -5,6 +5,10 @@ Built for **offline-first** environments and **low-digital-access** users, the s
 
 ---
 
+### ⚠️ 24gb RAM and A GPU recommended for builing the index
+
+---
+
 ## 🚀 Quick Start (TL;DR)
 
 1. **Build the index** (one-time):
@@ -38,7 +42,7 @@ Built for **offline-first** environments and **low-digital-access** users, the s
 ### 1. Clone & Enter
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/Sanchay117/Capital-One-Hackathon
 cd Capital-One-Hackathon
 ```
 
@@ -60,8 +64,6 @@ npm install
 
 ---
 
-x
-
 ## ⚙️ Environment Variables
 
 Create `.env` in **project root**:
@@ -71,11 +73,11 @@ Create `.env` in **project root**:
 GEMINI_API_KEY=your_gemini_key_here
 
 # PostgreSQL
-POSTGRES_DB=agriadvisor
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
-POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
+DJANGO_DB_NAME=capital1_db
+DJANGO_DB_USER=django_user
+DJANGO_DB_PASSWORD=strongpassword
+DJANGO_DB_HOST=localhost
+DJANGO_DB_PORT=5432
 ```
 
 ---
@@ -160,7 +162,7 @@ Capital-One-Hackathon/
 ├── frontend/            # React web app
 ├── data/                # Public datasets (JSONL)
 ├── artifacts/           # Generated index & corpus
-└── README-v2.md
+└── README.md
 ```
 
 ---
