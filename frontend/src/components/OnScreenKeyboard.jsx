@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 
-// NEW, more complete keyboard layouts
 const keyboards = {
   en: [
     ['`', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '='],
@@ -65,7 +64,6 @@ const keyboards = {
     ['ਂ', 'ਮ', 'ਨ', 'ਵ', 'ਲ', 'ਸ', ',', '.', 'ਯ', 'ਖ'],
     [' ' , 'Backspace', 'Enter']
   ],
-  // NEW LANGUAGES ADDED
   ur: [
     ['`', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '='],
     ['ق', 'و', 'ر', 'ت', 'ے', 'ء', 'ی', 'ہ', 'پ', ']', '[', '\\'],
@@ -100,7 +98,6 @@ const OnScreenKeyboard = ({ onKeyPress, currentLanguage, onLanguageChange }) => 
   return (
     <div className="keyboard">
       <div className="language-switcher">
-        {/* THE FIX: Buttons now call the onLanguageChange prop passed from the parent */}
         <button onClick={() => onLanguageChange('en')} className={currentLanguage === 'en' ? 'active' : ''}>English</button>
         <button onClick={() => onLanguageChange('hi')} className={currentLanguage === 'hi' ? 'active' : ''}>हिंदी</button>
         <button onClick={() => onLanguageChange('mr')} className={currentLanguage === 'mr' ? 'active' : ''}>मराठी</button>
@@ -115,7 +112,6 @@ const OnScreenKeyboard = ({ onKeyPress, currentLanguage, onLanguageChange }) => 
         <button onClick={() => onLanguageChange('or')} className={currentLanguage === 'or' ? 'active' : ''}>ଓଡ଼ିଆ</button>
       </div>
       <div className="keyboard-layout">
-        {/* THE FIX: Use the currentLanguage prop to select the correct keyboard layout */}
         {(keyboards[currentLanguage] || keyboards.en).map((row, i) => (
           <div key={i} className="keyboard-row">
             {row.map(key => (
