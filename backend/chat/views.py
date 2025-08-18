@@ -45,7 +45,8 @@ class GoogleLoginView(generics.GenericAPIView):
                 defaults={
                     'google_id': google_id,
                     'username': idinfo.get('given_name', email.split('@')[0]),
-                    'name': idinfo.get('name', ''),
+                    'first_name': idinfo.get('given_name', ''),
+                    'last_name': idinfo.get('family_name', ''),
                 }
             )
 
