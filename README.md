@@ -5,6 +5,11 @@ Built for **offline-first** environments and **low-digital-access** users, the s
 
 ---
 
+### Demo
+[Hosted on YouTube](https://www.youtube.com/watch?v=4jHOr2bVSO4)
+
+---
+
 ### ⚠️ 24GB RAM and A GPU recommended for builing the index
 
 ---
